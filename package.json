@@ -1,0 +1,23 @@
+{
+  "name": "btymini-uni",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BTY Mini uni-app migration project",
+  "scripts": {
+    "test": "node tests/food-diary-utils.test.mjs",
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-5000720260410001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5000720260410001",
+    "vue": "3.4.21"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "3.4.28",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5000720260410001",
+    "sass": "^1.69.0",
+    "vite": "5.2.8"
+  }
+}

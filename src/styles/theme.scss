@@ -1,0 +1,26 @@
+page {
+  --ink: #3d2725;
+  --muted: #958a86;
+  --paper: #faf7f0;
+  --card: #fffdf8;
+  --tile: #efeee8;
+  --accent: #cf9148;
+  --accent-strong: #b56f2e;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+}
+
+view,
+text,
+input,
+picker,
+scroll-view,
+image {
+  box-sizing: border-box;
+}
+
+.app-root {
+  min-height: 100vh;
+  background: var(--paper);
+}

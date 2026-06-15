@@ -1,0 +1,40 @@
+{
+  "pages": [
+    {
+      "path": "pages/food-diary/index/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "饮品记录"
+      }
+    },
+    {
+      "path": "pages/food-diary/add/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "饮品详情"
+      }
+    },
+    {
+      "path": "pages/food-diary/detail/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "当天记录"
+      }
+    },
+    {
+      "path": "pages/food-diary/store/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "选择店铺"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationStyle": "custom",
+    "navigationBarBackgroundColor": "#faf7f0",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#faf7f0",
+    "backgroundTextStyle": "light"
+  }
+}
+
