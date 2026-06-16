@@ -12,6 +12,8 @@
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-5000720260410001",
     "@dcloudio/uni-mp-weixin": "3.0.0-5000720260410001",
+    "@dcloudio/uni-ui": "^1.5.12",
+    "@vant/weapp": "^1.11.7",
     "vue": "3.4.21"
   },
   "devDependencies": {

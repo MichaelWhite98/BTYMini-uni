@@ -1,37 +1,91 @@
 <template>
-  <view class="food-diary-detail">
-    <view class="page-grain" />
+  <view class="detail-page">
+    <!-- 顶部导航栏 -->
+    <header class="app-header">
+      <button class="nav-btn" @tap="handleClose">
+        <uni-icons type="close" size="20"></uni-icons>
+      </button>
+      <text class="page-title">饮品详情</text>
+      <button class="nav-btn save" :class="{ disabled: !canSave }" @tap="handleSave">
+        <uni-icons type="checkbox" size="20"></uni-icons>
+      </button>
+    </header>
 
-    <view class="sheet-top">
-      <view class="circle-btn close" @tap="goBack">×</view>
-      <text class="page-title">{{ dateTitle }}</text>
-      <view class="circle-btn save" @tap="addRecord">+</view>
-    </view>
-
-    <scroll-view scroll-y class="content-area">
-      <view class="date-hero">
-        <text class="hero-label">饮品记录</text>
-        <text class="hero-title">{{ records.length }} 杯</text>
-        <text class="hero-subtitle">{{ date }}</text>
-      </view>
-
-      <view v-if="records.length" class="record-list">
-        <DrinkRecordCard
-          v-for="record in records"
-          :key="record.id"
-          :record="record"
-          @edit="editRecord"
-          @delete="removeRecord"
-        />
-      </view>
-
-      <view v-else class="empty-state">
-        <view class="empty-cup">
-          <text class="cup-lid" />
-          <text class="cup-body" />
+    <!-- 主内容 -->
+    <scroll-view scroll-y class="main-content">
+      <!-- 饮品图片 -->
+      <view class="drink-hero">
+        <view class="drink-image-wrapper">
+          <image v-if="drinkImage" class="drink-image" :src="drinkImage" mode="aspectFit" />
+          <view v-else class="drink-placeholder">
+            <uni-icons type="fire" size="20"></uni-icons>
+          </view>
         </view>
-        <text class="empty-title">今天还没有记录</text>
-        <text class="empty-text">点右上角加号，记录第一杯饮品</text>
+      </view>
+
+      <!-- 信息块 -->
+      <view class="info-blocks">
+        <!-- 日期时间 -->
+        <view class="info-card" @tap="handleDatePicker">
+          <view class="info-icon">
+            <uni-icons type="calendar" size="20"></uni-icons>
+          </view>
+          <text class="info-text">{{ dateTimeLabel }}</text>
+          <uni-icons type="bottom" size="20" class="arrow"></uni-icons>
+        </view>
+
+        <!-- 店铺 -->
+        <view class="info-card" @tap="handleStoreSelect">
+          <view class="info-icon">
+            <uni-icons type="shop" size="20"></uni-icons>
+          </view>
+          <text class="info-text">{{ storeName }}</text>
+          <uni-icons type="forward" size="20" class="arrow"></uni-icons>
+        </view>
+
+        <!-- 位置 -->
+        <view class="info-card">
+          <view class="info-icon">
+            <uni-icons type="location" size="20"></uni-icons>
+          </view>
+          <text class="info-text">{{ city }}</text>
+        </view>
+
+        <!-- 饮品名称 -->
+        <view class="info-card">
+          <view class="info-icon">
+            <uni-icons type="fire" size="20"></uni-icons>
+          </view>
+          <input
+            v-model="drinkName"
+            class="drink-input"
+            placeholder="饮品名称..."
+            maxlength="40"
+          />
+          <button class="favorite-btn" :class="{ active: isFavorite }" @tap="toggleFavorite">
+            <uni-icons type="star" size="20"></uni-icons>
+          </button>
+        </view>
+
+        <!-- 备注 -->
+        <view class="info-card note-card">
+          <view class="note-header">
+            <uni-icons type="compose" size="20"></uni-icons>
+            <text class="note-label">备注 (可选)</text>
+          </view>
+          <textarea
+            v-model="note"
+            class="note-input"
+            placeholder="添加备注..."
+            maxlength="200"
+            auto-height
+          />
+        </view>
+      </view>
+
+      <!-- 删除按钮 -->
+      <view v-if="isEdit" class="delete-action">
+        <button class="delete-btn" @tap="handleDelete">删除记录</button>
       </view>
     </scroll-view>
   </view>
@@ -39,199 +93,421 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onLoad, onShow } from '@dcloudio/uni-app'
-import DrinkRecordCard from '@/components/food-diary/DrinkRecordCard.vue'
-import { deleteRecord, getRecordsByDate, getToday } from '@/utils/food-diary/index.js'
-import { formatChineseDay } from '@/utils/food-diary/date.js'
+import { onLoad } from '@dcloudio/uni-app'
+import { DEFAULT_STORE } from '@/constants/food-diary.js'
+import { formatTime, getToday, getRecords, saveRecord, updateRecord, deleteRecord } from '@/utils/food-diary/index.js'
 
+// 状态
+const isEdit = ref(false)
+const recordId = ref('')
+const mode = ref('view') // view, add, edit
 const date = ref(getToday())
-const records = ref([])
+const time = ref(formatTime(new Date()))
+const drinkImage = ref('')
+const drinkName = ref('')
+const storeName = ref(DEFAULT_STORE.name)
+const storeAddress = ref(DEFAULT_STORE.address)
+const city = ref(DEFAULT_STORE.city)
+const note = ref('')
+const isFavorite = ref(false)
+const submitting = ref(false)
 
-const loadRecords = (targetDate) => {
-  date.value = targetDate
-  records.value = getRecordsByDate(targetDate)
+// 计算属性
+const canSave = computed(() => {
+  return drinkImage.value && drinkName.value.trim()
+})
+
+const dateTimeLabel = computed(() => {
+  const d = new Date(date.value)
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${time.value}`
+})
+
+// 加载记录
+const loadRecord = (id) => {
+  const records = getRecords()
+  const record = records.find((item) => item.id === id)
+  if (!record) return
+
+  isEdit.value = true
+  recordId.value = id
+  date.value = record.date || getToday()
+  time.value = record.time || formatTime(new Date())
+  drinkImage.value = (record.images && record.images[0]) || ''
+  drinkName.value = record.description || ''
+  storeName.value = record.storeName || DEFAULT_STORE.name
+  storeAddress.value = record.storeAddress || DEFAULT_STORE.address
+  city.value = record.city || DEFAULT_STORE.city
+  note.value = record.note || ''
+  isFavorite.value = !!record.isFavorite
 }
-
-const dateTitle = computed(() => formatChineseDay(new Date(date.value)))
 
 onLoad((query = {}) => {
-  const queryDate = query.date ? String(query.date) : getToday()
-  loadRecords(queryDate)
+  if (query.id) {
+    loadRecord(query.id)
+    mode.value = 'edit'
+    return
+  }
+
+  if (query.mode === 'add') {
+    mode.value = 'add'
+    if (query.date) date.value = String(query.date)
+    if (query.images) drinkImage.value = decodeURIComponent(String(query.images))
+  }
 })
 
-onShow(() => {
-  loadRecords(date.value)
-})
-
-const goBack = () => uni.navigateBack()
-const addRecord = () => uni.navigateTo({ url: `/pages/food-diary/add/index?date=${date.value}` })
-const editRecord = (record) => {
-  uni.navigateTo({ url: `/pages/food-diary/add/index?date=${date.value}&id=${record.id}` })
+// 日期选择
+const handleDatePicker = () => {
+  uni.showActionSheet({
+    itemList: ['选择日期', '选择时间'],
+    success: ({ tapIndex }) => {
+      if (tapIndex === 0) {
+        // 日期选择器
+        // uni-app 的 picker 需要在模板中声明
+      } else if (tapIndex === 1) {
+        // 时间选择器
+      }
+    }
+  })
 }
 
-const removeRecord = (record) => {
+// 店铺选择
+const handleStoreSelect = () => {
+  const params = [`date=${date.value}`]
+  if (recordId.value) params.push(`id=${recordId.value}`)
+  uni.navigateTo({ url: `/pages/food-diary/store/index?${params.join('&')}` })
+}
+
+// 收藏切换
+const toggleFavorite = () => {
+  isFavorite.value = !isFavorite.value
+}
+
+// 保存
+const handleSave = () => {
+  if (!canSave.value || submitting.value) return
+
+  submitting.value = true
+
+  const payload = {
+    date: date.value,
+    time: time.value,
+    category: 'coffee',
+    images: [drinkImage.value],
+    description: drinkName.value,
+    mood: 'good',
+    storeName: storeName.value,
+    storeAddress: storeAddress.value,
+    city: city.value,
+    note: note.value,
+    isFavorite: isFavorite.value,
+    location: {
+      name: storeName.value,
+      address: storeAddress.value
+    }
+  }
+
+  try {
+    if (isEdit.value && recordId.value) {
+      updateRecord(recordId.value, payload)
+      uni.showToast({ title: '已保存', icon: 'success' })
+    } else {
+      saveRecord(payload)
+      uni.showToast({ title: '已记录', icon: 'success' })
+    }
+
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 800)
+  } catch (error) {
+    console.error(error)
+    uni.showToast({ title: '保存失败', icon: 'none' })
+    submitting.value = false
+  }
+}
+
+// 关闭
+const handleClose = () => {
+  uni.navigateBack()
+}
+
+// 删除
+const handleDelete = () => {
+  if (!recordId.value) return
+
   uni.showModal({
     title: '删除记录',
-    content: '确定删除这杯饮品记录吗？',
-    confirmColor: '#cf9148',
+    content: '您确定要从历史记录中删除这项仪式吗？',
+    confirmColor: '#ba1a1a',
     success: ({ confirm }) => {
       if (!confirm) return
-      deleteRecord(record.id)
-      loadRecords(date.value)
-      uni.showToast({ title: '已删除', icon: 'success' })
+      deleteRecord(recordId.value)
+      uni.showToast({ title: '记录已删除', icon: 'success' })
+      setTimeout(() => uni.navigateBack(), 600)
     }
   })
 }
 </script>
 
 <style lang="scss" scoped>
-.food-diary-detail {
+@use '@/styles/theme.scss' as *;
+
+.detail-page {
   min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--background);
+  animation: fadeIn 0.3s ease-out;
 }
 
-.page-grain {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.9), transparent 20%),
-    radial-gradient(circle at 80% 36%, rgba(218, 204, 185, 0.12), transparent 25%),
-    linear-gradient(135deg, rgba(116, 91, 62, 0.035) 0 25%, transparent 25% 50%, rgba(116, 91, 62, 0.025) 50% 75%, transparent 75%);
-  background-size: auto, auto, 18rpx 18rpx;
-}
-
-.sheet-top {
-  position: fixed;
+// 顶部导航栏
+.app-header {
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 30;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  padding: 0 28rpx 14rpx;
-  background: rgba(250, 247, 240, 0.86);
-  backdrop-filter: blur(14rpx);
+  // 适配灵动岛：padding-top = 状态栏高度
+  padding-top: var(--status-bar-height);
+  height: calc(var(--nav-bar-height));
+  padding-left: $container-padding;
+  padding-right: $container-padding;
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-.page-title {
-  font-size: 40rpx;
-  font-weight: 800;
-  margin-bottom: 6rpx;
-}
-
-.circle-btn {
-  width: 68rpx;
-  height: 68rpx;
-  border-radius: 50%;
+.nav-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.55);
-  border: 4rpx solid rgba(255, 255, 255, 0.82);
-  color: #8f827d;
-  box-shadow: 0 10rpx 24rpx rgba(92, 73, 52, 0.08);
-  font-size: 40rpx;
+  color: var(--on-surface-variant);
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  border-radius: 50%;
+
+  &:active {
+    transform: scale(0.9);
+    background: var(--surface-container);
+  }
 
   &.save {
-    color: var(--accent);
+    color: var(--primary);
+
+    &.disabled {
+      opacity: 0.4;
+    }
+  }
+
+}
+
+
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+// 主内容
+.main-content {
+  padding: 32px $container-padding 80px;
+  height: calc(100vh - 64px);
+}
+
+// 饮品图片
+.drink-hero {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0 48px;
+  animation: slideUp 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.drink-image-wrapper {
+  position: relative;
+  width: 256px;
+  height: 256px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 153, 142, 0.1);
+    border-radius: 50%;
+    filter: blur(40px);
+    z-index: -1;
   }
 }
 
-.content-area {
-  position: relative;
-  z-index: 1;
-  height: 100vh;
-  box-sizing: border-box;
-  padding: 150rpx 28rpx 80rpx;
+.drink-image {
+  width: 192px;
+  height: auto;
+  max-height: 256px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 15px rgba(17, 153, 142, 0.2));
+  transform: rotate(-3deg);
 }
 
-.date-hero {
-  min-height: 210rpx;
-  padding: 34rpx 40rpx;
-  margin-bottom: 30rpx;
-  border-radius: 38rpx;
-  background: var(--card);
-  box-shadow: 0 18rpx 52rpx rgba(66, 48, 32, 0.07);
-  border: 2rpx solid rgba(216, 207, 196, 0.42);
-}
-
-.hero-label {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 800;
-  color: #8c817d;
-}
-
-.hero-title {
-  display: block;
-  margin-top: 22rpx;
-  font-size: 64rpx;
-  line-height: 0.9;
-  font-weight: 900;
-}
-
-.hero-subtitle {
-  display: block;
-  margin-top: 18rpx;
-  font-size: 28rpx;
-  color: var(--muted);
-}
-
-.record-list {
-  padding-bottom: 40rpx;
-}
-
-.empty-state {
-  min-height: 520rpx;
+.drink-placeholder {
+  width: 192px;
+  height: 192px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: var(--surface-container);
+  border-radius: 24px;
+
 }
 
-.empty-cup {
+// 信息块
+.info-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.info-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+  animation: cardEnter 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.info-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-md;
+  color: var(--primary);
+  flex-shrink: 0;
+
+}
+
+.info-text {
+  flex: 1;
+  font-size: $font-size-body-lg;
+  color: var(--on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  color: var(--outline);
+  font-size: 20px;
+}
+
+// 饮品名称输入
+.drink-input {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.favorite-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--outline);
+  padding: 0;
+  margin-left: 8px;
   position: relative;
-  width: 120rpx;
-  height: 160rpx;
-  margin-bottom: 30rpx;
-}
-
-.cup-lid {
-  position: absolute;
-  top: 0;
-  left: 16rpx;
-  width: 88rpx;
-  height: 24rpx;
+  overflow: hidden;
   border-radius: 50%;
-  background: #dfe9ea;
-  border: 7rpx solid #fff;
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  &.active {
+    color: var(--warning);
+  }
+
 }
 
-.cup-body {
-  position: absolute;
-  top: 26rpx;
-  left: 28rpx;
-  width: 64rpx;
-  height: 116rpx;
-  border-radius: 14rpx 14rpx 28rpx 28rpx;
-  background: linear-gradient(180deg, #a94f28, #3e1d1a);
-  border: 8rpx solid #fff;
-  box-shadow: 0 18rpx 34rpx rgba(74, 42, 24, 0.12);
+// 备注卡片
+.note-card {
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.empty-title {
-  font-size: 34rpx;
-  font-weight: 800;
+.note-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: var(--primary);
+
 }
 
-.empty-text {
-  margin-top: 12rpx;
-  font-size: 26rpx;
-  color: var(--muted);
+.note-label {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+}
+
+.note-input {
+  width: 100%;
+  min-height: 60px;
+  margin-top: 8px;
+  padding-left: 40px;
+  font-size: $font-size-body-lg;
+  color: var(--on-surface);
+  font-style: italic;
+  background: transparent;
+  border: none;
+}
+
+// 删除按钮
+.delete-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+.delete-btn {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  background: transparent;
+  border: none;
+  padding: $spacing-md;
+  border-radius: $radius-default;
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &:active {
+    color: var(--error);
+    transform: scale(0.95);
+    background: var(--error-container);
+  }
 }
 </style>

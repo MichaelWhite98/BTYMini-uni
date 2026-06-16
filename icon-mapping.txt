@@ -1,0 +1,31 @@
+# Material Icons 到 uni-icons 图标映射
+
+# 格式：material-icons名称 -> uni-icons名称
+menu: bars
+person: person
+calendar_today: calendar
+add_circle: plus
+close: close
+check: checkmark
+check_circle: checkbox
+edit: compose
+delete: trash
+search: search
+photo_camera: camera
+image: image
+arrow_back: left-nav
+chevron_right: right-nav
+expand_more: down
+star: star
+coffee: fire
+storefront: shop
+location_on: location
+notifications_none: sound
+dark_mode: eye-slash
+language: globe
+info: info
+cleaning_services: refresh
+shield_person: locked
+person_outline: person
+edit_note: compose
+local_cafe: fire

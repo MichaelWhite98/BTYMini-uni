@@ -1,4 +1,10 @@
 {
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+    }
+  },
   "pages": [
     {
       "path": "pages/food-diary/index/index",
@@ -11,14 +17,14 @@
       "path": "pages/food-diary/add/index",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "饮品详情"
+        "navigationBarTitleText": "添加记录"
       }
     },
     {
       "path": "pages/food-diary/detail/index",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "当天记录"
+        "navigationBarTitleText": "饮品详情"
       }
     },
     {
@@ -27,13 +33,33 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "选择店铺"
       }
+    },
+    {
+      "path": "pages/food-diary/monthly/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "本月详情"
+      }
+    },
+    {
+      "path": "pages/food-diary/profile/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/test/icons",
+      "style": {
+        "navigationBarTitleText": "图标测试"
+      }
     }
   ],
   "globalStyle": {
     "navigationStyle": "custom",
-    "navigationBarBackgroundColor": "#faf7f0",
+    "navigationBarBackgroundColor": "#fef8f5",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#faf7f0",
+    "backgroundColor": "#fef8f5",
     "backgroundTextStyle": "light"
   }
 }

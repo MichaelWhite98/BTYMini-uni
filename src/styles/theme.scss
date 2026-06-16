@@ -1,26 +1,564 @@
-page {
-  --ink: #3d2725;
-  --muted: #958a86;
-  --paper: #faf7f0;
-  --card: #fffdf8;
-  --tile: #efeee8;
-  --accent: #cf9148;
-  --accent-strong: #b56f2e;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+/**
+ * Fresh Natural Design System
+ * 清新自然风格设计系统
+ * 饮食日记小程序全新视觉系统
+ *
+ * 使用 @use 引入此文件：
+ * @use '@/styles/theme.scss' as *;
+ */
+
+// 注意：已改用 uni-icons 组件，无需引入 Material Icons 字体
+
+// ==================== 配色系统 ====================
+
+// 主色调 - 清新青绿渐变 (Primary)
+$primary: #11998e;
+$primary-light: #38ef7d;
+$primary-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+$primary-container: #e8f5f3;
+$on-primary: #ffffff;
+$on-primary-container: #0a3d2e;
+
+// 次要色 - 温暖橙色调 (Secondary)
+$secondary: #f57c00;
+$secondary-container: #fff3e0;
+$on-secondary: #ffffff;
+$on-secondary-container: #e65100;
+
+// 第三色 - 深色强调 (Tertiary)
+$tertiary: #2d2d2d;
+$tertiary-container: #f5f5f5;
+$on-tertiary: #ffffff;
+$on-tertiary-container: #1a1a1a;
+
+// 背景和表面 (Background & Surface)
+$background: #fafafa;
+$surface: #ffffff;
+$surface-dim: #f5f5f5;
+$surface-bright: #ffffff;
+$surface-variant: #e8f5f3;
+
+// 表面容器层级
+$surface-container-lowest: #ffffff;
+$surface-container-low: #fafafa;
+$surface-container: #f5f5f5;
+$surface-container-high: #f0f0f0;
+$surface-container-highest: #e8e8e8;
+
+// 文本颜色 (Text Colors)
+$on-background: #1a1a1a;
+$on-surface: #1a1a1a;
+$on-surface-variant: #666666;
+
+// 轮廓 (Outline)
+$outline: #e0e0e0;
+$outline-variant: #f0f0f0;
+
+// 成功状态 (Success)
+$success: #38ef7d;
+$success-container: #e8f5f3;
+$on-success: #ffffff;
+$on-success-container: #0a3d2e;
+
+// 警告状态 (Warning)
+$warning: #f57c00;
+$warning-container: #fff3e0;
+$on-warning: #ffffff;
+$on-warning-container: #e65100;
+
+// 错误状态 (Error)
+$error: #e53935;
+$error-container: #ffebee;
+$on-error: #ffffff;
+$on-error-container: #c62828;
+
+// ==================== 间距系统 ====================
+
+// 基于 4px 基线
+$spacing-unit: 4px;
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xxl: 48px;
+
+$container-padding: 20px;
+$gutter: 16px;
+
+// ==================== 圆角系统 ====================
+
+// 大圆角柔和设计
+$radius-sm: 8px;
+$radius-default: 12px;
+$radius-md: 16px;
+$radius-lg: 20px;
+$radius-xl: 24px;
+$radius-2xl: 28px;
+$radius-full: 9999px;
+
+// ==================== 阴影系统 ====================
+
+// 柔和渐变阴影
+$shadow-xs: 0 2px 8px rgba(17, 153, 142, 0.04);
+$shadow-sm: 0 4px 12px rgba(17, 153, 142, 0.06);
+$shadow-md: 0 4px 20px rgba(17, 153, 142, 0.08);
+$shadow-lg: 0 8px 24px rgba(17, 153, 142, 0.12);
+$shadow-xl: 0 12px 32px rgba(17, 153, 142, 0.16);
+
+// 特殊阴影
+$shadow-card: 0 4px 20px rgba(17, 153, 142, 0.08);
+$shadow-button: 0 4px 12px rgba(17, 153, 142, 0.2);
+$shadow-fab: 0 8px 24px rgba(17, 153, 142, 0.3);
+
+// ==================== 字体系统 ====================
+
+// 字体家族
+$font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                   "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+// 字体大小
+$font-size-display-lg: 36px;
+$font-size-headline-lg: 28px;
+$font-size-title-md: 18px;
+$font-size-body-lg: 16px;
+$font-size-body-sm: 14px;
+$font-size-label-caps: 12px;
+
+// 行高
+$line-height-display-lg: 44px;
+$line-height-headline-lg: 36px;
+$line-height-title-md: 24px;
+$line-height-body-lg: 24px;
+$line-height-body-sm: 20px;
+$line-height-label-caps: 16px;
+
+// 字重
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ==================== 动画系统 ====================
+
+// 动画时长
+$duration-fast: 0.15s;
+$duration-normal: 0.3s;
+$duration-slow: 0.45s;
+
+// 缓动函数
+$ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+$ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+$ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+// ==================== Mixin 定义 ====================
+
+// 基础过渡
+@mixin transition-base {
+  transition: all $duration-normal $ease-out;
 }
+
+// 变换过渡
+@mixin transition-transform {
+  transition: transform $duration-normal $ease-out;
+}
+
+// 悬停提升效果
+@mixin hover-lift {
+  transform: translateY(-2px);
+  box-shadow: $shadow-md;
+}
+
+// 点击缩放效果
+@mixin active-scale {
+  transform: scale(0.96);
+}
+
+// 卡片基础样式
+@mixin card-base {
+  background: $surface;
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// 主要按钮样式
+@mixin btn-primary {
+  background: $primary-gradient;
+  color: $on-primary;
+  border-radius: $radius-lg;
+  padding: 12px $spacing-lg;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-body-sm;
+  box-shadow: $shadow-button;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// 次要按钮样式
+@mixin btn-secondary {
+  background: transparent;
+  color: $primary;
+  border: 2px solid $primary;
+  border-radius: $radius-lg;
+  padding: 10px 22px;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-body-sm;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// 输入框样式
+@mixin input-field {
+  width: 100%;
+  height: 48px;
+  padding: 0 $spacing-md;
+  background: $surface-container-low;
+  border: 2px solid transparent;
+  border-radius: $radius-lg;
+  font-size: $font-size-body-sm;
+  color: $on-surface;
+  @include transition-base;
+
+  &::placeholder {
+    color: $on-surface-variant;
+  }
+
+  &:focus {
+    border-color: $primary;
+    background: $surface;
+  }
+}
+
+// ==================== 全局样式 ====================
+
+page {
+  // ==================== 安全区域变量 ====================
+  // 状态栏高度
+  --status-bar-height: 20px;
+  // 安全区域插入
+  --safe-area-top: 0px;
+  --safe-area-bottom: 0px;
+  --safe-area-left: 0px;
+  --safe-area-right: 0px;
+  // 导航栏高度 = 状态栏高度 + 导航栏内容高度(44px)
+  --nav-bar-height: 64px;
+  // 底部安全区域高度
+  --tab-bar-height: 50px;
+  --bottom-safe-height: calc(var(--tab-bar-height) + var(--safe-area-bottom));
+
+  // ==================== 颜色变量 ====================
+  // 主色调 - 清新青绿渐变
+  --primary: #{$primary};
+  --primary-light: #{$primary-light};
+  --primary-gradient: #{$primary-gradient};
+  --primary-container: #{$primary-container};
+  --on-primary: #{$on-primary};
+  --on-primary-container: #{$on-primary-container};
+
+  // 次要色 - 温暖橙色调
+  --secondary: #{$secondary};
+  --secondary-container: #{$secondary-container};
+  --on-secondary: #{$on-secondary};
+  --on-secondary-container: #{$on-secondary-container};
+
+  // 第三色 - 深色强调
+  --tertiary: #{$tertiary};
+  --tertiary-container: #{$tertiary-container};
+  --on-tertiary: #{$on-tertiary};
+  --on-tertiary-container: #{$on-tertiary-container};
+
+  // 背景和表面
+  --background: #{$background};
+  --surface: #{$surface};
+  --surface-dim: #{$surface-dim};
+  --surface-bright: #{$surface-bright};
+  --surface-variant: #{$surface-variant};
+
+  // 表面容器层级
+  --surface-container-lowest: #{$surface-container-lowest};
+  --surface-container-low: #{$surface-container-low};
+  --surface-container: #{$surface-container};
+  --surface-container-high: #{$surface-container-high};
+  --surface-container-highest: #{$surface-container-highest};
+
+  // 文本颜色
+  --on-background: #{$on-background};
+  --on-surface: #{$on-surface};
+  --on-surface-variant: #{$on-surface-variant};
+
+  // 轮廓
+  --outline: #{$outline};
+  --outline-variant: #{$outline-variant};
+
+  // 成功状态
+  --success: #{$success};
+  --success-container: #{$success-container};
+  --on-success: #{$on-success};
+  --on-success-container: #{$on-success-container};
+
+  // 警告状态
+  --warning: #{$warning};
+  --warning-container: #{$warning-container};
+  --on-warning: #{$on-warning};
+  --on-warning-container: #{$on-warning-container};
+
+  // 错误状态
+  --error: #{$error};
+  --error-container: #{$error-container};
+  --on-error: #{$on-error};
+  --on-error-container: #{$on-error-container};
+
+  // 背景色
+  background: var(--background);
+  color: var(--on-background);
+
+  // 字体
+  font-family: $font-family-base;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// ==================== 全局重置 ====================
 
 view,
 text,
 input,
 picker,
 scroll-view,
-image {
+image,
+button {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
+
+// 禁用按钮默认样式
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+
+  &::after {
+    border: none;
+  }
+}
+
+// 注意：已改用 uni-icons 组件，无需 .material-icons 样式
+
+// ==================== 应用根容器 ====================
 
 .app-root {
   min-height: 100vh;
-  background: var(--paper);
+  background: var(--background);
+}
+
+// ==================== 工具类 ====================
+
+// 文本溢出处理
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.text-ellipsis-3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+// 文本换行
+.text-wrap {
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+// 卡片样式
+.card {
+  @include card-base;
+}
+
+.card-elevated {
+  @include card-base;
+  background: $surface-container-lowest;
+  border-radius: $radius-xl;
+}
+
+// 按钮样式
+.btn-primary {
+  @include btn-primary;
+}
+
+.btn-secondary {
+  @include btn-secondary;
+}
+
+.btn-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: $primary-gradient;
+  color: $on-primary;
+  box-shadow: $shadow-fab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+// 输入框样式
+.input-field {
+  @include input-field;
+}
+
+// 标签样式
+.tag {
+  display: inline-block;
+  background: var(--primary-container);
+  color: var(--primary);
+  padding: 6px $spacing-md;
+  border-radius: $radius-lg;
+  font-size: 13px;
+  font-weight: $font-weight-medium;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.tag-success {
+  background: var(--success-container);
+  color: var(--success);
+}
+
+.tag-warning {
+  background: var(--warning-container);
+  color: var(--warning);
+}
+
+.tag-error {
+  background: var(--error-container);
+  color: var(--error);
+}
+
+// 玻璃效果导航栏
+.glass-nav {
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+// 隐藏滚动条
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+// ==================== 动画关键帧 ====================
+
+// 页面进入动画
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// 页面退出动画
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+// 卡片进入动画
+@keyframes cardEnter {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// 淡入动画
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// 缩放动画
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// 应用动画类
+.page-enter {
+  animation: slideUp $duration-normal $ease-out;
+}
+
+.card-enter {
+  animation: cardEnter $duration-slow $ease-out;
+}
+
+.fade-in {
+  animation: fadeIn $duration-normal $ease-out;
+}
+
+.scale-in {
+  animation: scaleIn $duration-normal $ease-spring;
 }

@@ -1,0 +1,103 @@
+<h2>选择全新的设计风格</h2>
+<p class="subtitle">每种风格都有独特的视觉特征和品牌调性</p>
+
+<div class="cards">
+  <div class="card" data-choice="modern-minimal" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%); height: 140px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 20px;">●</div>
+        <div style="position: absolute; top: 70px; left: 20px; width: 80px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px;"></div>
+        <div style="position: absolute; top: 85px; left: 20px; width: 60px; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px;"></div>
+        <div style="font-size: 18px; margin-top: 20px;">现代简约</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>现代简约风格</h3>
+      <p>黑白灰主色调，极简设计语言，强调功能性和内容，适合专业型产品</p>
+      <div style="margin-top: 12px;">
+        <div style="font-size: 12px; color: #999; margin-bottom: 8px;">配色方案</div>
+        <div style="display: flex; gap: 8px;">
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #1a1a1a;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #4a4a4a;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #f5f5f5;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: white; border: 1px solid #e0e0e0;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="vibrant-colorful" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); height: 140px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 15px; right: 15px; width: 50px; height: 50px; background: rgba(255,255,255,0.3); border-radius: 12px; transform: rotate(15deg);"></div>
+        <div style="position: absolute; bottom: 20px; left: 15px; width: 35px; height: 35px; background: rgba(255,255,255,0.2); border-radius: 50%;"></div>
+        <div style="font-size: 18px;">活力多彩</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>活力多彩风格</h3>
+      <p>丰富渐变色彩，活泼动感的视觉效果，适合年轻化、社交化产品</p>
+      <div style="margin-top: 12px;">
+        <div style="font-size: 12px; color: #999; margin-bottom: 8px;">配色方案</div>
+        <div style="display: flex; gap: 8px;">
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #f093fb;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #4facfe;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #fa709a;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="premium-luxury" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: linear-gradient(135deg, #2c1810 0%, #6b4423 100%); height: 140px; display: flex; align-items: center; justify-content: center; color: #d4af37; font-weight: 600; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 2px solid #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">✦</div>
+        <div style="position: absolute; top: 25px; right: 25px; width: 8px; height: 8px; background: #d4af37; border-radius: 50%;"></div>
+        <div style="font-size: 18px; margin-top: 30px;">高端奢华</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>高端奢华风格</h3>
+      <p>深色主调配金色点缀，精致优雅，适合高端品牌、精品电商</p>
+      <div style="margin-top: 12px;">
+        <div style="font-size: 12px; color: #999; margin-bottom: 8px;">配色方案</div>
+        <div style="display: flex; gap: 8px;">
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #2c1810;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #6b4423;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #d4af37;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #faf3e0;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="fresh-natural" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); height: 140px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 15px; left: 15px; font-size: 32px;">🌿</div>
+        <div style="position: absolute; bottom: 15px; right: 15px; font-size: 28px;">🍃</div>
+        <div style="font-size: 18px;">清新自然</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>清新自然风格</h3>
+      <p>青绿色主调，自然舒适的视觉感受，适合健康、生活、餐饮类产品</p>
+      <div style="margin-top: 12px;">
+        <div style="font-size: 12px; color: #999; margin-bottom: 8px;">配色方案</div>
+        <div style="display: flex; gap: 8px;">
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #11998e;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #38ef7d;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #e8f5f3;"></div>
+          <div style="width: 36px; height: 36px; border-radius: 6px; background: #fafafa;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 32px; padding: 16px; background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%); border-left: 4px solid #667eea; border-radius: 8px;">
+  <p style="margin: 0; font-size: 14px; color: #666;">
+    💡 <strong>提示：</strong>这是一个饮食日记小程序，选择与产品定位相符的风格会让用户体验更佳。清新自然风格可能最适合饮食健康主题。
+  </p>
+</div>
