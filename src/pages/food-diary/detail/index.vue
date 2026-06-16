@@ -16,9 +16,27 @@
       <!-- 饮品图片 -->
       <view class="drink-hero">
         <view class="drink-image-wrapper">
-          <image v-if="drinkImage" class="drink-image" :src="drinkImage" mode="aspectFit" />
+          <image v-if="heroImage" class="drink-image" :src="heroImage" mode="aspectFit" />
           <view v-else class="drink-placeholder">
             <uni-icons type="fire" size="20"></uni-icons>
+          </view>
+        </view>
+      </view>
+
+      <view v-if="visionSummary" class="vision-summary-card">
+        <view class="vision-summary-header">
+          <view class="vision-badge">
+            <uni-icons type="image" size="16"></uni-icons>
+            <text class="vision-badge-text">主体抠图</text>
+          </view>
+          <text class="vision-score">{{ visionSummary.scoreText }}</text>
+        </view>
+
+        <view class="vision-primary">
+          <image class="vision-thumb" :src="visionSummary.previewImage" mode="aspectFill" />
+          <view class="vision-primary-text">
+            <text class="vision-title">{{ visionSummary.title }}</text>
+            <text class="vision-subtitle">{{ visionSummary.helperText }}</text>
           </view>
         </view>
       </view>
@@ -95,7 +113,15 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { DEFAULT_STORE } from '@/constants/food-diary.js'
-import { formatTime, getToday, getRecords, saveRecord, updateRecord, deleteRecord } from '@/utils/food-diary/index.js'
+import {
+  consumeCutoutDraft,
+  formatTime,
+  getToday,
+  getRecords,
+  saveRecord,
+  updateRecord,
+  deleteRecord
+} from '@/utils/food-diary/index.js'
 
 // 状态
 const isEdit = ref(false)
@@ -103,7 +129,7 @@ const recordId = ref('')
 const mode = ref('view') // view, add, edit
 const date = ref(getToday())
 const time = ref(formatTime(new Date()))
-const drinkImage = ref('')
+const sourceImage = ref('')
 const drinkName = ref('')
 const storeName = ref(DEFAULT_STORE.name)
 const storeAddress = ref(DEFAULT_STORE.address)
@@ -111,16 +137,45 @@ const city = ref(DEFAULT_STORE.city)
 const note = ref('')
 const isFavorite = ref(false)
 const submitting = ref(false)
+const vision = ref(null)
 
 // 计算属性
 const canSave = computed(() => {
-  return drinkImage.value && drinkName.value.trim()
+  return sourceImage.value && drinkName.value.trim()
 })
 
 const dateTimeLabel = computed(() => {
   const d = new Date(date.value)
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${time.value}`
 })
+
+const heroImage = computed(() => {
+  const selectedItem = vision.value && vision.value.selectedItem
+  return (selectedItem && (selectedItem.cutoutUrl || selectedItem.thumbnailUrl)) || sourceImage.value
+})
+
+const visionSummary = computed(() => {
+  if (!vision.value || !vision.value.selectedItem) return null
+
+  const score = Number(vision.value.selectedItem.score || 0)
+
+  return {
+    title: vision.value.selectedItem.displayName || '主体抠图',
+    helperText: '已应用主体抠图。接入真实服务后，主体外的区域会保留透明背景。',
+    previewImage: (vision.value.selectedItem.thumbnailUrl || vision.value.selectedItem.cutoutUrl || sourceImage.value),
+    scoreText: score > 0 ? `主体稳定度 ${Math.round(score * 100)}%` : '已自动分析'
+  }
+})
+
+const deriveCategory = () => {
+  return 'coffee'
+}
+
+const applyVisionDraft = (draft) => {
+  if (!draft) return
+  vision.value = draft
+  sourceImage.value = draft.sourceImageUrl || draft.imageUrl || sourceImage.value
+}
 
 // 加载记录
 const loadRecord = (id) => {
@@ -132,13 +187,14 @@ const loadRecord = (id) => {
   recordId.value = id
   date.value = record.date || getToday()
   time.value = record.time || formatTime(new Date())
-  drinkImage.value = (record.images && record.images[0]) || ''
+  sourceImage.value = (record.images && record.images[0]) || ''
   drinkName.value = record.description || ''
   storeName.value = record.storeName || DEFAULT_STORE.name
   storeAddress.value = record.storeAddress || DEFAULT_STORE.address
   city.value = record.city || DEFAULT_STORE.city
   note.value = record.note || ''
   isFavorite.value = !!record.isFavorite
+  vision.value = record.vision || null
 }
 
 onLoad((query = {}) => {
@@ -151,7 +207,10 @@ onLoad((query = {}) => {
   if (query.mode === 'add') {
     mode.value = 'add'
     if (query.date) date.value = String(query.date)
-    if (query.images) drinkImage.value = decodeURIComponent(String(query.images))
+    if (query.images) sourceImage.value = decodeURIComponent(String(query.images))
+    if (query.visionDraftId) {
+      applyVisionDraft(consumeCutoutDraft(String(query.visionDraftId)))
+    }
   }
 })
 
@@ -191,8 +250,8 @@ const handleSave = () => {
   const payload = {
     date: date.value,
     time: time.value,
-    category: 'coffee',
-    images: [drinkImage.value],
+    category: deriveCategory(),
+    images: [sourceImage.value],
     description: drinkName.value,
     mood: 'good',
     storeName: storeName.value,
@@ -203,7 +262,8 @@ const handleSave = () => {
     location: {
       name: storeName.value,
       address: storeAddress.value
-    }
+    },
+    vision: vision.value
   }
 
   try {
@@ -456,6 +516,74 @@ const handleDelete = () => {
   }
 
 }
+
+.vision-summary-card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: $shadow-card;
+  animation: cardEnter 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.vision-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.vision-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.vision-badge-text {
+  color: var(--primary);
+}
+
+.vision-score {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+
+.vision-primary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vision-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: var(--surface-container);
+  flex-shrink: 0;
+}
+
+.vision-primary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vision-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.vision-subtitle {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+}
+
 
 // 备注卡片
 .note-card {

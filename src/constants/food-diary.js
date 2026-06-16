@@ -1,7 +1,9 @@
 export const STORAGE_KEYS = {
   RECORDS: 'bty_uni_food_records',
   MONTH_INDEX: 'bty_uni_food_month_index',
-  SELECTED_STORE: 'bty_uni_food_selected_store'
+  SELECTED_STORE: 'bty_uni_food_selected_store',
+  VISION_TASK_PREFIX: 'bty_uni_food_vision_task_',
+  VISION_DRAFT_PREFIX: 'bty_uni_food_vision_draft_'
 }
 
 export const WEEK_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -51,4 +53,3 @@ export const STORE_LIST = [
 ]
 
 export const DEFAULT_STORE = STORE_LIST[0]
-

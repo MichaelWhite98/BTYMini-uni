@@ -292,14 +292,14 @@ onShow(() => {
 
 // 主内容区
 .main-content {
-  padding: 8px $container-padding 32px;
+  padding: 12px $container-padding 40px;
   height: calc(100vh - 164px);
 }
 
 // 日期标题
 .date-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   animation: slideUp 0.4s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -323,10 +323,10 @@ onShow(() => {
 // 日历卡片
 .calendar-card {
   background: var(--surface);
-  border-radius: 24px;
-  padding: 24px;
+  border-radius: 28px;
+  padding: 28px 20px 32px;
   box-shadow: $shadow-card;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   overflow: hidden;
   animation: cardEnter 0.5s cubic-bezier(0.32, 0.72, 0, 1);
   transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
@@ -336,13 +336,18 @@ onShow(() => {
   }
 }
 
-.week-row {
+.calendar-grid {
   display: flex;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .week-label {
-  flex: 1;
   text-align: center;
   font-size: 12px;
   font-weight: 700;
@@ -353,17 +358,16 @@ onShow(() => {
 }
 
 .days-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  row-gap: 10px;
 }
 
 .day-cell {
-  width: 14.285%;
-  height: 40px;
+  min-height: 62px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
 
   &.empty {
     opacity: 0;
@@ -388,12 +392,12 @@ onShow(() => {
 }
 
 .day-content {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface-container);
   transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 
@@ -404,13 +408,14 @@ onShow(() => {
 }
 
 .day-number {
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--on-surface);
 }
 
 .drink-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(17, 153, 142, 0.2));
 }

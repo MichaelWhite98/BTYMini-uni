@@ -88,6 +88,44 @@ const normalizeLocation = (record) => {
   }
 }
 
+const normalizeVision = (vision) => {
+  if (!vision || typeof vision !== 'object') return null
+
+  const selectedItem = vision.selectedItem && typeof vision.selectedItem === 'object'
+    ? {
+      id: vision.selectedItem.id || '',
+      displayName: vision.selectedItem.displayName || '',
+      score: Number(vision.selectedItem.score || 0),
+      bbox: Array.isArray(vision.selectedItem.bbox) ? vision.selectedItem.bbox.slice(0, 4) : [],
+      maskUrl: vision.selectedItem.maskUrl || '',
+      cutoutUrl: vision.selectedItem.cutoutUrl || '',
+      thumbnailUrl: vision.selectedItem.thumbnailUrl || '',
+      sourceType: vision.selectedItem.sourceType || ''
+    }
+    : null
+
+  return {
+    taskId: vision.taskId || '',
+    scene: vision.scene || 'food-diary-cutout',
+    imageId: vision.imageId || '',
+    imageUrl: vision.imageUrl || '',
+    sourceImageUrl: vision.sourceImageUrl || vision.imageUrl || '',
+    primaryItemId: vision.primaryItemId || vision.recommendedItemId || (selectedItem && selectedItem.id) || '',
+    selectedItemId: vision.selectedItemId || (selectedItem && selectedItem.id) || '',
+    selectedItem,
+    items: Array.isArray(vision.items) ? vision.items.map((item) => ({
+      id: item.id || '',
+      displayName: item.displayName || '',
+      score: Number(item.score || 0),
+      bbox: Array.isArray(item.bbox) ? item.bbox.slice(0, 4) : [],
+      maskUrl: item.maskUrl || '',
+      cutoutUrl: item.cutoutUrl || '',
+      thumbnailUrl: item.thumbnailUrl || '',
+      sourceType: item.sourceType || ''
+    })) : []
+  }
+}
+
 const normalizeRecord = (record, base = {}) => {
   const now = new Date().toISOString()
   const next = {
@@ -109,6 +147,7 @@ const normalizeRecord = (record, base = {}) => {
     note: next.note || '',
     isFavorite: !!next.isFavorite,
     location: normalizeLocation(next),
+    vision: normalizeVision(next.vision),
     createdAt: next.createdAt || now,
     updatedAt: now
   }

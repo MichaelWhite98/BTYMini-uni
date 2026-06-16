@@ -25,9 +25,19 @@
 
 **适合人群**: 正在开发该模块的开发者
 
+#### 3. [饮食图片主体抠图 MVP 开发方案](./food-image-vision-mvp-plan.md)
+**面向主体透明抠图的完整研发方案，包含：**
+- 小程序接入流程
+- 透明背景抠图架构
+- API 与数据结构设计
+- 前后端拆分方案
+- 里程碑与验收标准
+
+**适合人群**: 负责图片分析、后端接口和前端接入的开发者
+
 ### 迁移文档
 
-#### 3. [uni-app 迁移文档](./uni-app-migration.md)
+#### 4. [uni-app 迁移文档](./uni-app-migration.md)
 **从 Taro 迁移到 uni-app 的文档，包含：**
 - 迁移原因分析
 - 迁移步骤说明
@@ -36,14 +46,14 @@
 
 **适合人群**: 参与项目迁移的开发者
 
-#### 4. [npm 安装故障排除](./npm-install-troubleshooting.md)
+#### 5. [npm 安装故障排除](./npm-install-troubleshooting.md)
 **npm 安装问题解决方案**
 
 **适合人群**: 遇到依赖安装问题的开发者
 
 ### 设计文档
 
-#### 5. [设计系统文档](../../resources/stitch_minimalist_design_drafts/brew_steep/DESIGN.md)
+#### 6. [设计系统文档](../../resources/stitch_minimalist_design_drafts/brew_steep/DESIGN.md)
 **Ritualistic Minimalist 设计系统完整说明**
 
 **适合人群**: 设计师和前端开发者
@@ -71,6 +81,7 @@ bty-mini/BTYMini-uni/
 │   ├── README.md                      # 文档索引（本文件）
 │   ├── food-diary-pages-development.md # 开发总结
 │   ├── food-diary-quick-reference.md  # 快速参考
+│   ├── food-image-vision-mvp-plan.md  # 图片主体抠图方案
 │   ├── uni-app-migration.md           # 迁移文档
 │   └── npm-install-troubleshooting.md # 故障排除
 ├── src/                               # 源代码目录

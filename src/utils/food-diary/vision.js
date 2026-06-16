@@ -1,0 +1,338 @@
+import { STORAGE_KEYS } from '../../constants/food-diary.js'
+import { createUniStorageAdapter } from './storage.js'
+import { getMiniRuntime } from './runtime.js'
+
+const storage = createUniStorageAdapter()
+
+const safeParse = (value, fallback = null) => {
+  if (!value) return fallback
+
+  try {
+    return typeof value === 'string' ? JSON.parse(value) : value
+  } catch (error) {
+    return fallback
+  }
+}
+
+const safeStringify = (value) => JSON.stringify(value)
+
+const delay = (ms) => new Promise((resolve) => {
+  setTimeout(resolve, ms)
+})
+
+const createId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+
+const taskKey = (taskId) => `${STORAGE_KEYS.VISION_TASK_PREFIX}${taskId}`
+const draftKey = (draftId) => `${STORAGE_KEYS.VISION_DRAFT_PREFIX}${draftId}`
+
+const CANDIDATE_PRIORITY = ['cup', 'drink', 'bowl', 'plate', 'food']
+const DEFAULT_SCENE = 'food-diary-cutout'
+
+const getCutoutApiBase = () => {
+  if (typeof globalThis !== 'undefined' && globalThis.__BTY_CUTOUT_API_BASE__) {
+    return String(globalThis.__BTY_CUTOUT_API_BASE__).replace(/\/$/, '')
+  }
+
+  return ''
+}
+
+const getRuntime = () => getMiniRuntime()
+
+const normalizeItem = (item, index = 0) => ({
+  id: item.id || createId('cutout_item'),
+  displayName: item.displayName || `主体 ${index + 1}`,
+  score: Number(item.score || 0),
+  bbox: Array.isArray(item.bbox) ? item.bbox.slice(0, 4) : [],
+  areaRatio: Number(item.areaRatio || 0),
+  maskUrl: item.maskUrl || '',
+  cutoutUrl: item.cutoutUrl || '',
+  thumbnailUrl: item.thumbnailUrl || item.cutoutUrl || '',
+  sourceType: item.sourceType || ''
+})
+
+const normalizeTaskPayload = (task) => {
+  const items = Array.isArray(task.items) ? task.items.map(normalizeItem) : []
+  return {
+    taskId: task.taskId || createId('cutout_task'),
+    scene: task.scene || DEFAULT_SCENE,
+    imageId: task.imageId || '',
+    imageUrl: task.imageUrl || '',
+    sourceImageUrl: task.sourceImageUrl || task.imageUrl || '',
+    createdAt: Number(task.createdAt || Date.now()),
+    primaryItemId: task.primaryItemId || buildPrimaryItemId(items),
+    items
+  }
+}
+
+const buildPrimaryItemId = (items) => {
+  const sorted = items.slice().sort((left, right) => {
+    const leftPriority = CANDIDATE_PRIORITY.indexOf(left.sourceType)
+    const rightPriority = CANDIDATE_PRIORITY.indexOf(right.sourceType)
+
+    if (leftPriority !== rightPriority) {
+      return (leftPriority === -1 ? 999 : leftPriority) - (rightPriority === -1 ? 999 : rightPriority)
+    }
+
+    if (left.score !== right.score) return right.score - left.score
+    return right.areaRatio - left.areaRatio
+  })
+
+  return sorted[0] ? sorted[0].id : ''
+}
+
+const buildMockItems = (imageUrl) => {
+  const suffix = imageUrl.split('/').pop() || 'image'
+
+  return [
+    {
+      id: `${suffix}_item_1`,
+      displayName: '主体 1',
+      score: 0.96,
+      bbox: [132, 88, 292, 462],
+      areaRatio: 0.22,
+      maskUrl: imageUrl,
+      cutoutUrl: imageUrl,
+      thumbnailUrl: imageUrl,
+      sourceType: 'cup'
+    },
+    {
+      id: `${suffix}_item_2`,
+      displayName: '主体 2',
+      score: 0.88,
+      bbox: [44, 246, 584, 760],
+      areaRatio: 0.35,
+      maskUrl: imageUrl,
+      cutoutUrl: imageUrl,
+      thumbnailUrl: imageUrl,
+      sourceType: 'plate'
+    }
+  ].map(normalizeItem)
+}
+
+const writeTask = (task) => {
+  storage.setItem(taskKey(task.taskId), safeStringify(task))
+}
+
+const readTask = (taskId) => safeParse(storage.getItem(taskKey(taskId)), null)
+
+const writeDraft = (draftId, payload) => {
+  storage.setItem(draftKey(draftId), safeStringify(payload))
+}
+
+const requestJson = ({ url, method = 'GET', data, header }) => {
+  const runtime = getRuntime()
+  if (!runtime || typeof runtime.request !== 'function') {
+    return Promise.reject(new Error('request is unavailable in the current runtime'))
+  }
+
+  return new Promise((resolve, reject) => {
+    runtime.request({
+      url,
+      method,
+      data,
+      header,
+      success: (response) => {
+        const statusCode = Number(response.statusCode || 0)
+        if (statusCode >= 200 && statusCode < 300) {
+          resolve(response.data)
+          return
+        }
+
+        reject(new Error(`request failed with status ${statusCode}`))
+      },
+      fail: reject
+    })
+  })
+}
+
+const uploadBinary = ({ url, filePath, name = 'file', formData, header }) => {
+  const runtime = getRuntime()
+  if (!runtime || typeof runtime.uploadFile !== 'function') {
+    return Promise.reject(new Error('uploadFile is unavailable in the current runtime'))
+  }
+
+  return new Promise((resolve, reject) => {
+    runtime.uploadFile({
+      url,
+      filePath,
+      name,
+      formData,
+      header,
+      success: resolve,
+      fail: reject
+    })
+  })
+}
+
+const uploadWithServerContract = async ({ filePath, fileName = 'image.jpg', contentType = 'image/jpeg' }) => {
+  const base = getCutoutApiBase()
+  const tokenData = await requestJson({
+    url: `${base}/api/media/upload-token`,
+    method: 'POST',
+    data: {
+      bizType: 'food-diary-cutout',
+      fileName,
+      contentType
+    }
+  })
+
+  await uploadBinary({
+    url: tokenData.uploadUrl,
+    filePath,
+    name: tokenData.fileFieldName || 'file',
+    formData: tokenData.formData || {},
+    header: tokenData.headers || {}
+  })
+
+  return {
+    imageId: tokenData.imageId || '',
+    imageUrl: tokenData.fileUrl || '',
+    fileKey: tokenData.fileKey || ''
+  }
+}
+
+export const prepareCutoutSource = async ({ filePath, fileName = 'image.jpg', contentType = 'image/jpeg' }) => {
+  const base = getCutoutApiBase()
+  if (!base) {
+    await delay(120)
+    return {
+      imageId: createId('local_image'),
+      imageUrl: filePath,
+      fileKey: ''
+    }
+  }
+
+  return uploadWithServerContract({ filePath, fileName, contentType })
+}
+
+export const createCutoutTask = async ({
+  imageId = '',
+  imageUrl,
+  sourceImageUrl = imageUrl,
+  scene = DEFAULT_SCENE
+}) => {
+  const base = getCutoutApiBase()
+
+  if (!base) {
+    await delay(150)
+
+    const task = normalizeTaskPayload({
+      taskId: createId('cutout_task'),
+      scene,
+      imageId,
+      imageUrl,
+      sourceImageUrl,
+      createdAt: Date.now(),
+      items: buildMockItems(imageUrl)
+    })
+
+    writeTask(task)
+
+    return {
+      taskId: task.taskId,
+      status: 'queued'
+    }
+  }
+
+  const response = await requestJson({
+    url: `${base}/api/cutout/tasks`,
+    method: 'POST',
+    data: {
+      scene,
+      imageId,
+      imageUrl
+    }
+  })
+
+  return {
+    taskId: response.taskId,
+    status: response.status || 'queued'
+  }
+}
+
+export const getCutoutTask = async (taskId) => {
+  const base = getCutoutApiBase()
+
+  if (!base) {
+    await delay(120)
+
+    const task = readTask(taskId)
+    if (!task) {
+      return {
+        taskId,
+        status: 'failed',
+        failReason: '任务不存在或已过期'
+      }
+    }
+
+    const elapsed = Date.now() - Number(task.createdAt || 0)
+
+    if (elapsed < 800) return { taskId, status: 'queued' }
+    if (elapsed < 2200) return { taskId, status: 'running' }
+
+    return {
+      taskId,
+      status: 'succeeded',
+      scene: task.scene,
+      imageId: task.imageId,
+      imageUrl: task.imageUrl,
+      sourceImageUrl: task.sourceImageUrl,
+      primaryItemId: task.primaryItemId,
+      items: task.items
+    }
+  }
+
+  const response = await requestJson({
+    url: `${base}/api/cutout/tasks/${taskId}`,
+    method: 'GET'
+  })
+
+  return {
+    taskId: response.taskId,
+    status: response.status,
+    scene: response.scene || DEFAULT_SCENE,
+    imageId: response.imageId || '',
+    imageUrl: response.imageUrl || '',
+    sourceImageUrl: response.sourceImageUrl || response.imageUrl || '',
+    primaryItemId: response.primaryItemId || '',
+    items: Array.isArray(response.items) ? response.items.map(normalizeItem) : [],
+    failReason: response.failReason || ''
+  }
+}
+
+export const saveCutoutDraft = (payload) => {
+  const draftId = createId('cutout_draft')
+  writeDraft(draftId, payload)
+  return draftId
+}
+
+export const consumeCutoutDraft = (draftId) => {
+  const payload = safeParse(storage.getItem(draftKey(draftId)), null)
+  if (!payload) return null
+  storage.removeItem(draftKey(draftId))
+  return payload
+}
+
+export const buildCutoutDraft = ({ task, selectedItemId }) => {
+  const normalizedTask = normalizeTaskPayload(task)
+  const fallbackId = selectedItemId || normalizedTask.primaryItemId || ''
+  const selectedItem = normalizedTask.items.find((item) => item.id === fallbackId) || normalizedTask.items[0] || null
+
+  return {
+    taskId: normalizedTask.taskId,
+    scene: normalizedTask.scene,
+    imageId: normalizedTask.imageId,
+    imageUrl: normalizedTask.imageUrl,
+    sourceImageUrl: normalizedTask.sourceImageUrl,
+    primaryItemId: normalizedTask.primaryItemId || (selectedItem && selectedItem.id) || '',
+    selectedItemId: (selectedItem && selectedItem.id) || '',
+    selectedItem,
+    items: normalizedTask.items
+  }
+}
+
+export const createVisionTask = createCutoutTask
+export const getVisionTask = getCutoutTask
+export const saveVisionDraft = saveCutoutDraft
+export const consumeVisionDraft = consumeCutoutDraft
+export const buildVisionDraft = buildCutoutDraft

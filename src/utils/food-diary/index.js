@@ -3,4 +3,4 @@ export * from './image.js'
 export * from './runtime.js'
 export * from './storage.js'
 export * from './records.js'
-
+export * from './vision.js'

@@ -54,6 +54,12 @@ onLoad((query = {}) => {
   }
 })
 
+const navigateToAnalyze = (imagePath) => {
+  uni.redirectTo({
+    url: `/pages/food-diary/analyze/index?date=${selectedDate.value}&image=${encodeURIComponent(imagePath)}`
+  })
+}
+
 // 拍照
 const handleCamera = () => {
   uni.chooseImage({
@@ -62,10 +68,7 @@ const handleCamera = () => {
     sourceType: ['camera'],
     success: (res) => {
       const tempFilePaths = res.tempFilePaths
-      // 跳转到详情页面编辑
-      uni.redirectTo({
-        url: `/pages/food-diary/detail/index?date=${selectedDate.value}&mode=add&images=${encodeURIComponent(tempFilePaths[0])}`
-      })
+      navigateToAnalyze(tempFilePaths[0])
     }
   })
 }
@@ -78,10 +81,7 @@ const handleAlbum = () => {
     sourceType: ['album'],
     success: (res) => {
       const tempFilePaths = res.tempFilePaths
-      // 跳转到详情页面编辑
-      uni.redirectTo({
-        url: `/pages/food-diary/detail/index?date=${selectedDate.value}&mode=add&images=${encodeURIComponent(tempFilePaths[0])}`
-      })
+      navigateToAnalyze(tempFilePaths[0])
     }
   })
 }

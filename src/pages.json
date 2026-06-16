@@ -21,6 +21,13 @@
       }
     },
     {
+      "path": "pages/food-diary/analyze/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "图片分析"
+      }
+    },
+    {
       "path": "pages/food-diary/detail/index",
       "style": {
         "navigationStyle": "custom",
@@ -63,4 +70,3 @@
     "backgroundTextStyle": "light"
   }
 }
-
