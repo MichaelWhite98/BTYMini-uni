@@ -1,0 +1,387 @@
+/**
+ * 公共组件样式
+ * Food Diary Mini Program
+ *
+ * 包含：导航栏、底部导航、按钮、卡片等公共组件样式
+ * 使用 @use 引入此文件：
+ * @use '@/styles/components.scss' as *;
+ */
+
+@use './theme.scss' as *;
+
+// ==================== 顶部导航栏 ====================
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--status-bar-height);
+  height: calc(var(--nav-bar-height));
+  padding-left: $container-padding;
+  padding-right: $container-padding;
+  background: var(--background);
+  transition: all $duration-normal $ease-out;
+}
+
+// 玻璃效果导航栏
+.app-header--glass {
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+// 导航栏标题
+.app-header__title {
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+// 品牌标题（带渐变）
+.brand-title {
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+
+  &--gradient {
+    background: $primary-gradient;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+// ==================== 按钮组件 ====================
+
+// 基础按钮重置类
+.btn-reset {
+  @include btn-reset;
+}
+
+// 导航按钮 (40px)
+.nav-btn {
+  @include nav-button;
+}
+
+// 小型导航按钮 (32px)
+.nav-btn--sm {
+  @include nav-button($btn-size-sm);
+}
+
+// 大型导航按钮 (48px)
+.nav-btn--lg {
+  @include nav-button($btn-size-lg);
+}
+
+// 底部导航按钮
+.nav-item {
+  @include nav-item-button;
+}
+
+// FAB 浮动按钮
+.nav-item--fab {
+  @include fab-button;
+}
+
+// ==================== 底部导航栏 ====================
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 16px 24px;
+  padding-bottom: calc(32px + var(--safe-area-bottom));
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 -2px 16px rgba(17, 153, 142, 0.04);
+}
+
+// ==================== 卡片组件 ====================
+
+// 基础卡片
+.info-card {
+  background: var(--surface);
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+  @include transition-base;
+  overflow: hidden;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// 垂直布局卡片
+.info-card--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+// 卡片图标容器
+.info-card__icon {
+  width: $btn-size-lg;
+  height: $btn-size-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-md;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+// 卡片文本
+.info-card__text {
+  flex: 1;
+  font-size: $font-size-body-lg;
+  color: var(--on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 卡片箭头
+.info-card__arrow {
+  color: var(--outline);
+  transition: all $duration-normal $ease-out;
+}
+
+// ==================== 统计组件 ====================
+
+// 统计数字（带渐变）
+.stat-number--gradient {
+  font-size: $font-size-display-lg;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// 统计标签
+.stat-label {
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+}
+
+// ==================== 标签组件 ====================
+
+// 基础标签
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-container);
+  color: var(--primary);
+  padding: 6px $spacing-md;
+  border-radius: $radius-lg;
+  font-size: 13px;
+  font-weight: $font-weight-medium;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// 标签变体
+.tag--success {
+  background: var(--success-container);
+  color: var(--success);
+}
+
+.tag--warning {
+  background: var(--warning-container);
+  color: var(--warning);
+}
+
+.tag--error {
+  background: var(--error-container);
+  color: var(--error);
+}
+
+// ==================== 操作按钮 ====================
+
+// 主要操作按钮
+.primary-btn {
+  @include btn-reset;
+  min-height: 52px;
+  padding: 0 $spacing-lg;
+  background: var(--primary);
+  color: #fff;
+  border-radius: $radius-lg;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-semibold;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &[disabled] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+}
+
+// 次要操作按钮
+.secondary-btn {
+  @include btn-reset;
+  min-height: 52px;
+  padding: 0 $spacing-lg;
+  background: var(--surface);
+  color: var(--primary);
+  border-radius: $radius-lg;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-semibold;
+  box-shadow: $shadow-card;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// ==================== 分隔线 ====================
+
+.divider {
+  height: 1px;
+  background: var(--surface-container);
+  width: 100%;
+}
+
+// ==================== 头像组件 ====================
+
+.avatar {
+  width: $btn-size-md;
+  height: $btn-size-md;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--primary-container);
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+.avatar--lg {
+  width: 96px;
+  height: 96px;
+  border-width: 4px;
+  box-shadow: $shadow-card;
+}
+
+.avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// ==================== 底部操作栏 ====================
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px $container-padding calc(16px + var(--safe-area-bottom));
+  background: rgba(254, 248, 245, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+// ==================== 表单组件 ====================
+
+// 输入框
+.input-field {
+  width: 100%;
+  height: 48px;
+  padding: 0 $spacing-md;
+  background: var(--surface-container-low);
+  border: 2px solid transparent;
+  border-radius: $radius-lg;
+  font-size: $font-size-body-sm;
+  color: var(--on-surface);
+  @include transition-base;
+
+  &::placeholder {
+    color: var(--on-surface-variant);
+  }
+
+  &:focus {
+    border-color: var(--primary);
+    background: var(--surface);
+  }
+}
+
+// 文本域
+.textarea-field {
+  width: 100%;
+  min-height: 60px;
+  padding: $spacing-md;
+  background: transparent;
+  border: none;
+  font-size: $font-size-body-lg;
+  color: var(--on-surface);
+  resize: none;
+}
+
+// ==================== 空状态 ====================
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+}
+
+.empty-state__icon {
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container);
+  border-radius: 50%;
+  margin-bottom: 24px;
+  color: var(--on-surface-variant);
+}
+
+.empty-state__title {
+  font-size: $font-size-headline-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.empty-state__subtitle {
+  font-size: $font-size-body-sm;
+  color: var(--on-surface-variant);
+  line-height: 1.5;
+}

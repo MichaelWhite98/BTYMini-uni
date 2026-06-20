@@ -23,11 +23,37 @@
           class="search-input"
           placeholder="搜索或输入店名..."
           placeholder-class="search-placeholder"
+          @confirm="handleConfirm"
         />
+        <button v-if="keyword" class="clear-btn" @tap="keyword = ''">
+          <uni-icons type="clear" size="16"></uni-icons>
+        </button>
+      </view>
+
+      <!-- 最近访问 -->
+      <view v-if="recentStores.length > 0 && !keyword" class="section">
+        <text class="section-label">最近访问</text>
+        <view class="store-list-card">
+          <view
+            v-for="store in recentStores"
+            :key="store.name"
+            class="store-item"
+            :class="{ selected: selectedStore && selectedStore.name === store.name }"
+            @tap="selectStore(store)"
+          >
+            <view class="store-item-info">
+              <text class="store-item-name">{{ store.name }}</text>
+              <text v-if="store.address" class="store-item-address">{{ store.address }}</text>
+            </view>
+            <view class="visit-badge">
+              <text class="visit-count">{{ store.visits }}次</text>
+            </view>
+          </view>
+        </view>
       </view>
 
       <!-- 上次到访 -->
-      <view class="section">
+      <view v-if="lastVisitedStore.name && !keyword" class="section">
         <text class="section-label">上次到访</text>
         <view class="last-store-card" @tap="selectStore(lastVisitedStore)">
           <view class="store-info">
@@ -42,7 +68,7 @@
 
       <!-- 附近门店 -->
       <view class="section">
-        <text class="section-label">附近门店</text>
+        <text class="section-label">{{ keyword ? '搜索结果' : '附近门店' }}</text>
         <view class="store-list-card">
           <view
             v-for="(store, index) in filteredStores"
@@ -57,6 +83,12 @@
             </view>
             <text class="store-distance">{{ store.distance }}</text>
           </view>
+          
+          <!-- 无搜索结果 -->
+          <view v-if="keyword && filteredStores.length === 0" class="empty-result">
+            <text class="empty-text">未找到匹配的店铺</text>
+            <text class="empty-hint">点击右上角确认按钮可直接使用输入的店名</text>
+          </view>
         </view>
       </view>
     </scroll-view>
@@ -66,19 +98,24 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { STORE_LIST, DEFAULT_STORE } from '@/constants/food-diary.js'
+import { STORE_LIST, DEFAULT_STORE, STORAGE_KEYS } from '@/constants/food-diary.js'
+import { getRecords } from '@/utils/food-diary/index.js'
 
 // 状态
 const keyword = ref('')
 const selectedStore = ref(null)
 const sourceDate = ref('')
 const sourceId = ref('')
+const customStoreName = ref('')
 
-// 上次到访的店铺
+// 上次到访的店铺 - 从实际记录中统计
 const lastVisitedStore = ref({
   ...DEFAULT_STORE,
-  visits: 5
+  visits: 1
 })
+
+// 最近访问的店铺列表
+const recentStores = ref([])
 
 // 过滤后的店铺列表
 const filteredStores = computed(() => {
@@ -89,24 +126,72 @@ const filteredStores = computed(() => {
   )
 })
 
+// 从记录中统计店铺访问次数
+const calculateStoreVisits = () => {
+  const records = getRecords()
+  const storeMap = new Map()
+
+  records.forEach(record => {
+    const storeName = record.storeName || (record.location && record.location.name)
+    if (storeName) {
+      const count = storeMap.get(storeName) || 0
+      storeMap.set(storeName, count + 1)
+    }
+  })
+
+  // 转换为访问次数最多的店铺列表
+  const stores = Array.from(storeMap.entries())
+    .map(([name, count]) => {
+      const record = records.find(r =>
+        (r.storeName || (r.location && r.location.name)) === name
+      )
+      return {
+        name,
+        address: record.storeAddress || (record.location && record.location.address) || '',
+        city: record.city || '深圳市',
+        visits: count
+      }
+    })
+    .sort((a, b) => b.visits - a.visits)
+
+  // 设置上次访问最多的店铺
+  if (stores.length > 0) {
+    lastVisitedStore.value = stores[0]
+    recentStores.value = stores.slice(0, 5)
+  }
+}
+
 onLoad((query = {}) => {
   sourceDate.value = query.date ? String(query.date) : ''
   sourceId.value = query.id ? String(query.id) : ''
+  
+  // 计算店铺访问统计
+  calculateStoreVisits()
 })
 
 // 选择店铺
 const selectStore = (store) => {
   selectedStore.value = store
+  keyword.value = store.name
 }
 
 // 确认选择
 const handleConfirm = () => {
-  if (!selectedStore.value) {
-    uni.showToast({ title: '请选择店铺', icon: 'none' })
+  const storeName = keyword.value.trim()
+  
+  if (!storeName) {
+    uni.showToast({ title: '请选择或输入店铺名称', icon: 'none' })
     return
   }
 
-  const store = selectedStore.value
+  // 如果是选择的店铺，使用完整信息
+  // 如果是手动输入的，创建新的店铺对象
+  const store = selectedStore.value || {
+    name: storeName,
+    address: '',
+    city: '深圳市'
+  }
+
   const params = [
     `storeName=${encodeURIComponent(store.name)}`,
     `storeAddress=${encodeURIComponent(store.address)}`,
@@ -221,7 +306,7 @@ const handleClose = () => {
 .search-input {
   width: 100%;
   height: 48px;
-  padding: 0 $spacing-md 0 48px;
+  padding: 0 48px 0 48px;
   background: var(--surface-container-low);
   border: 2px solid transparent;
   border-radius: 24px;
@@ -232,6 +317,28 @@ const handleClose = () => {
   &:focus {
     border-color: var(--primary);
     background: var(--surface);
+  }
+}
+
+.clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container);
+  border: none;
+  border-radius: 50%;
+  color: var(--on-surface-variant);
+  padding: 0;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: translateY(-50%) scale(0.9);
   }
 }
 
@@ -383,5 +490,26 @@ const handleClose = () => {
   color: var(--on-surface-variant);
   margin-left: $spacing-md;
   white-space: nowrap;
+}
+
+// 空结果
+.empty-result {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-text {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 8px;
+}
+
+.empty-hint {
+  display: block;
+  font-size: 13px;
+  color: var(--outline);
+  line-height: 1.5;
 }
 </style>

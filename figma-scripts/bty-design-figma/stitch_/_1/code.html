@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>百淘云 - 饮品追踪</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .gradient-primary {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .verdant-shadow {
+            box-shadow: 0 10px 30px -5px rgba(17, 153, 142, 0.08);
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fafafa;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .calendar-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #006860;
+            margin: 2px auto 0;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#2a655f",
+                        "tertiary-container": "#457e77",
+                        "secondary": "#006d32",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeeeee",
+                        "tertiary-fixed-dim": "#97d2c9",
+                        "primary-container": "#008379",
+                        "tertiary-fixed": "#b3eee5",
+                        "on-primary-fixed": "#00201d",
+                        "on-tertiary-container": "#f4fffc",
+                        "surface-container-low": "#f3f3f3",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2f3131",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-container": "#4dfe8a",
+                        "inverse-primary": "#68d8cc",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#005224",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#006860",
+                        "outline": "#6d7a77",
+                        "on-secondary-container": "#007235",
+                        "on-primary-container": "#f3fffc",
+                        "surface-container-high": "#e8e8e8",
+                        "on-background": "#1a1c1c",
+                        "outline-variant": "#bcc9c6",
+                        "surface": "#f9f9f9",
+                        "background": "#f9f9f9",
+                        "on-surface-variant": "#3d4947",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed-dim": "#68d8cc",
+                        "surface-dim": "#dadada",
+                        "on-tertiary-fixed": "#00201d",
+                        "surface-bright": "#f9f9f9",
+                        "on-surface": "#1a1c1c",
+                        "on-secondary-fixed": "#00210b",
+                        "primary-fixed": "#86f5e8",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#006a62",
+                        "on-primary-fixed-variant": "#00504a",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#0e4f49",
+                        "secondary-fixed": "#64ff92",
+                        "secondary-fixed-dim": "#23e373"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "40px",
+                        "stack-sm": "8px",
+                        "stack-lg": "48px",
+                        "gutter": "16px",
+                        "stack-md": "24px",
+                        "unit": "4px",
+                        "container-padding-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- Top AppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-white/30 shadow-sm">
+<div class="flex items-center justify-between px-container-padding-mobile h-16 w-full max-w-5xl mx-auto">
+<button class="hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface-variant">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">百淘云</h1>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-fixed hover:opacity-80 transition-opacity active:scale-95 transition-transform cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A professional and friendly user profile portrait of a young adult, set against a soft green and white bokeh background that reflects a clean, healthy lifestyle aesthetic. The lighting is bright and natural, enhancing the minimalist and modern feel of the wellness application interface. The subject has a gentle smile, conveying confidence and approachability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsHCQgW2WENnVKoZqVBHDGoBVge71o8nIpGQnPE_i3DzS4r9D268TEHsW0Zn0l4HJmI-2k7V6DMLFEJ1fTkeTYG6-20GfXRoMybyTbMy32CCiKctLqyjVRJ8y8BX7eRb7f-OJ2lRLt79MDYnNvACQXj1HXQmR1_1GpYynwp3pPWNsRTAmEyo13VhKOQqzSGhbyEZ3zG9zIkNyNc6YZvTqf_85LyxFTAJfzWWUltpfxMf506SFBcNjc19LBhTsiMThBCbE1KSHD-Kw"/>
+</div>
+</div>
+</header>
+<main class="pt-24 px-container-padding-mobile max-w-5xl mx-auto space-y-stack-md">
+<!-- Date Header -->
+<section class="flex flex-col space-y-1">
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-surface">今天</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">2023年10月24日 星期二</p>
+</section>
+<!-- Calendar Card -->
+<div class="bg-surface-container-lowest rounded-[28px] p-stack-md verdant-shadow border border-white/40">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-primary">十月 2023</h3>
+<div class="flex space-x-4">
+<span class="material-symbols-outlined text-primary cursor-pointer">chevron_left</span>
+<span class="material-symbols-outlined text-primary cursor-pointer">chevron_right</span>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-y-4 text-center">
+<span class="text-label-sm font-label-sm text-outline">一</span>
+<span class="text-label-sm font-label-sm text-outline">二</span>
+<span class="text-label-sm font-label-sm text-outline">三</span>
+<span class="text-label-sm font-label-sm text-outline">四</span>
+<span class="text-label-sm font-label-sm text-outline">五</span>
+<span class="text-label-sm font-label-sm text-outline">六</span>
+<span class="text-label-sm font-label-sm text-outline">日</span>
+<!-- Calendar Days Mockup -->
+<div class="py-2 text-on-surface-variant opacity-30">25</div>
+<div class="py-2 text-on-surface-variant opacity-30">26</div>
+<div class="py-2 text-on-surface-variant opacity-30">27</div>
+<div class="py-2 text-on-surface-variant opacity-30">28</div>
+<div class="py-2 text-on-surface-variant opacity-30">29</div>
+<div class="py-2 text-on-surface-variant opacity-30">30</div>
+<div class="py-2 text-on-surface font-semibold">1<div class="calendar-dot"></div></div>
+<div class="py-2 text-on-surface">2</div>
+<div class="py-2 text-on-surface font-semibold">3<div class="calendar-dot"></div></div>
+<div class="py-2 text-on-surface">4</div>
+<div class="py-2 text-on-surface">5</div>
+<div class="py-2 text-on-surface font-semibold">6<div class="calendar-dot"></div></div>
+<div class="py-2 text-on-surface">7</div>
+<div class="py-2 text-on-surface">8</div>
+<div class="py-2 text-on-surface">9</div>
+<div class="py-2 text-on-surface">10</div>
+<div class="py-2 text-on-surface">11</div>
+<div class="py-2 text-on-surface font-semibold">12<div class="calendar-dot"></div></div>
+<div class="py-2 text-on-surface">13</div>
+<div class="py-2 text-on-surface">14</div>
+<div class="py-2 text-on-surface font-semibold">15<div class="calendar-dot"></div></div>
+<div class="py-2 text-on-surface">16</div>
+<div class="py-2 text-on-surface">17</div>
+<div class="py-2 text-on-surface">18</div>
+<div class="py-2 text-on-surface">19</div>
+<div class="py-2 text-on-surface font-semibold">20<div class="calendar-dot"></div></div>
+<div class="py-2 text-on-surface">21</div>
+<div class="py-2 text-on-surface">22</div>
+<div class="py-2 text-on-surface">23</div>
+<div class="py-2 bg-primary text-white rounded-xl font-bold active:scale-95 transition-transform">24</div>
+<div class="py-2 text-on-surface">25</div>
+<div class="py-2 text-on-surface">26</div>
+<div class="py-2 text-on-surface">27</div>
+<div class="py-2 text-on-surface">28</div>
+<div class="py-2 text-on-surface">29</div>
+</div>
+</div>
+<!-- Monthly Stats Card -->
+<div class="bg-surface-container-lowest rounded-[28px] p-stack-md verdant-shadow border border-white/40 overflow-hidden relative group">
+<div class="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[120px] text-primary">analytics</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6">本月概览</h3>
+<div class="grid grid-cols-2 gap-4 relative z-10">
+<div class="bg-primary-container/10 p-4 rounded-2xl border border-primary-container/20">
+<p class="text-label-sm font-label-sm text-tertiary uppercase tracking-wider mb-1">饮用杯数</p>
+<div class="flex items-baseline space-x-1">
+<span class="text-3xl font-bold text-primary">36</span>
+<span class="text-body-md text-primary/70">杯</span>
+</div>
+</div>
+<div class="bg-secondary-container/10 p-4 rounded-2xl border border-secondary-container/20">
+<p class="text-label-sm font-label-sm text-secondary uppercase tracking-wider mb-1">到访店铺</p>
+<div class="flex items-baseline space-x-1">
+<span class="text-3xl font-bold text-secondary">5</span>
+<span class="text-body-md text-secondary/70">间</span>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-surface-variant">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-label-sm font-label-sm text-outline">最常饮用</p>
+<p class="font-body-lg font-semibold text-on-surface">冰美式 (12次)</p>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-primary-fixed flex items-center justify-center text-[12px] font-bold text-primary">☕</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-secondary-fixed flex items-center justify-center text-[12px] font-bold text-secondary">🍵</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity Mini Section -->
+<div class="space-y-4 pt-4">
+<div class="flex justify-between items-center px-2">
+<h4 class="font-headline-md text-headline-md text-on-surface text-lg">最近追踪</h4>
+<button class="text-primary text-label-sm font-label-sm">查看全部</button>
+</div>
+<div class="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide no-scrollbar">
+<div class="min-w-[200px] bg-white p-4 rounded-2xl verdant-shadow border border-white flex flex-col space-y-3">
+<div class="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-weight="fill">local_cafe</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">星巴克</p>
+<p class="text-label-sm text-outline">拿铁 · 14:30</p>
+</div>
+</div>
+<div class="min-w-[200px] bg-white p-4 rounded-2xl verdant-shadow border border-white flex flex-col space-y-3">
+<div class="w-12 h-12 bg-secondary-container/30 rounded-xl flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-weight="fill">bubble_chart</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">喜茶</p>
+<p class="text-label-sm text-outline">芝芝莓莓 · 昨天</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Navigation Shell -->
+<nav class="fixed bottom-0 w-full rounded-t-lg z-50 pb-safe bg-surface/70 backdrop-blur-xl border-t border-white/30 shadow-[0_-4px_20px_rgba(17,153,142,0.08)]">
+<div class="flex justify-around items-center h-20 w-full px-4 relative">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold bg-secondary-container/30 rounded-xl px-3 py-1 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-weight="fill">home</span>
+<span class="font-label-sm text-label-sm">首页</span>
+</a>
+<!-- Stats -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-primary-container/10 p-2 rounded-xl active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">equalizer</span>
+<span class="font-label-sm text-label-sm">统计</span>
+</a>
+<!-- FAB - Center Button -->
+<div class="relative -top-8">
+<button class="w-16 h-16 gradient-primary rounded-full shadow-lg shadow-primary/40 flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all duration-300">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+<!-- Analysis -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-primary-container/10 p-2 rounded-xl active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-label-sm text-label-sm">分析</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-primary-container/10 p-2 rounded-xl active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">我的</span>
+</a>
+</div>
+</nav>
+<script>
+        // Micro-interaction for cards
+        document.querySelectorAll('.verdant-shadow').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.boxShadow = '0 15px 35px -5px rgba(17, 153, 142, 0.12)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '0 10px 30px -5px rgba(17, 153, 142, 0.08)';
+            });
+            card.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        });
+
+        // Current Date Logic
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        // In a real app we'd localized via data, here we just set the visual consistency
+    </script>
+</body></html>

@@ -98,13 +98,14 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { WEEK_LABELS } from '@/constants/food-diary.js'
+import { WEEK_LABELS, DEFAULT_STORE } from '@/constants/food-diary.js'
 import {
   formatChineseDay,
   formatMonthLabel,
   getMonthIndex,
   getMonthStats,
   getToday,
+  getRecords,
   shiftMonthKey
 } from '@/utils/food-diary/index.js'
 
@@ -122,12 +123,8 @@ const monthStats = ref({
   storeCount: 0
 })
 
-// 饮品贴纸
-const drinkStickers = ref([
-  { image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBB-J8VvJZ_Rc6bcBmo0KzCZgZvneveEf4V2sbgP9hHJc-9zhj5PjAuO7QhIrjuTPSOIf97nm__fdT8MNiO_YqPucHOAulG82L3_LzHzsJqtbVLlVDN_4kJo1OgIbIsUvg391KsN1Hr5mpsXG3qyXQRrdpjdAMoJ8IBBNpyh6CCHBqg4hNEs6saohoqfG2em7_m4VenA7MpuVCNO6EXUQmVV49gIRsxFBnD6rod2pzE5xE4IiB01ttw4_PjNOV1Pr5HHSrnT5-Kdbs' },
-  { image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAdd_GQ1k0prJmI9_NRvV05a-ClmezfE9apkSCLMTruTYUQOLZ7E4sfTZ7vUY1ONaYGfIQ_RGosW2A5rEZBxgYHVIXgQN8SdPEw870WjoVOKSqsu0DD2HxzJXxZEszMGa3ozqZyOp6Bx-ouGiT0c8TRLtyO3_fRLfr0RkpOESZ-ahZsfy6XVCAl9igSuFXdF15AwYQ9dOv0M75wAvwXXPqCZS5NAo2kzOz7i5RQJs2OXdmFzpjX5xbWYJA_qJbD2NwDOmiWOBhu2o0' },
-  { image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAZ3KgHnv2uWHPW6-BI7iy7fAVSaFAkUmyM7uyEiskWQOZPaPO7eqA0QC--clRcIacuX-6b97CsMLy8Qc9SXsdofICxpymAmiqpuaIZf4pn-MeS1Zy1MzuLGTv0N9jsCEpf6Hva4ZM_BdPYxR_Gx6qQJfe4rc5VV3BwpnXN3EOkmhqfZuAtB4cbXvbMl4hHuFVNmZjx-mJoH3WyCQChu7UQxxEsHf37AJ6ly1QiKG9FtA5XJqzVjnN63sNAaLllqTARI67gPE9toDw' }
-])
+// 饮品贴纸 - 从实际记录中提取
+const drinkStickers = ref([])
 
 // 今天的日期标签
 const todayLabel = computed(() => formatChineseDay(new Date()))
@@ -167,12 +164,47 @@ const calendarDays = computed(() => {
   return days
 })
 
+// 更新饮品贴纸 - 从最近记录中获取图片
+const updateDrinkStickers = () => {
+  const records = getRecords()
+  const images = []
+  
+  // 获取最近3条记录的图片
+  records.slice(0, 3).forEach(record => {
+    if (record.images && record.images.length > 0) {
+      // 优先使用抠图结果
+      const vision = record.vision
+      if (vision && vision.selectedItem && vision.selectedItem.cutoutUrl) {
+        images.push({ image: vision.selectedItem.cutoutUrl })
+      } else if (vision && vision.selectedItem && vision.selectedItem.thumbnailUrl) {
+        images.push({ image: vision.selectedItem.thumbnailUrl })
+      } else {
+        images.push({ image: record.images[0] })
+      }
+    }
+  })
+  
+  // 如果有实际图片则使用，否则使用默认图片
+  if (images.length > 0) {
+    drinkStickers.value = images
+  } else {
+    drinkStickers.value = [
+      { image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBB-J8VvJZ_Rc6bcBmo0KzCZgZvneveEf4V2sbgP9hHJc-9zhj5PjAuO7QhIrjuTPSOIf97nm__fdT8MNiO_YqPucHOAulG82L3_LzHzsJqtbVLlVDN_4kJo1OgIbIsUvg391KsN1Hr5mpsXG3qyXQRrdpjdAMoJ8IBBNpyh6CCHBqg4hNEs6saohoqfG2em7_m4VenA7MpuVCNO6EXUQmVV49gIRsxFBnD6rod2pzE5xE4IiB01ttw4_PjNOV1Pr5HHSrnT5-Kdbs' },
+      { image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAdd_GQ1k0prJmI9_NRvV05a-ClmezfE9apkSCLMTruTYUQOLZ7E4sfTZ7vUY1ONaYGfIQ_RGosW2A5rEZBxgYHVIXgQN8SdPEw870WjoVOKSqsu0DD2HxzJXxZEszMGa3ozqZyOp6Bx-ouGiT0c8TRLtyO3_fRLfr0RkpOESZ-ahZsfy6XVCAl9igSuFXdF15AwYQ9dOv0M75wAvwXXPqCZS5NAo2kzOz7i5RQJs2OXdmFzpjX5xbWYJA_qJbD2NwDOmiWOBhu2o0' },
+      { image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAZ3KgHnv2uWHPW6-BI7iy7fAVSaFAkUmyM7uyEiskWQOZPaPO7eqA0QC--clRcIacuX-6b97CsMLy8Qc9SXsdofICxpymAmiqpuaIZf4pn-MeS1Zy1MzuLGTv0N9jsCEpf6Hva4ZM_BdPYxR_Gx6qQJfe4rc5VV3BwpnXN3EOkmhqfZuAtB4cbXvbMl4hHuFVNmZjx-mJoH3WyCQChu7UQxxEsHf37AJ6ly1QiKG9FtA5XJqzVjnN63sNAaLllqTARI67gPE9toDw' }
+    ]
+  }
+}
+
 // 加载月份数据
 const loadMonth = (month) => {
   const monthIndex = getMonthIndex(month)
   currentMonth.value = month
   monthData.value = monthIndex.days || {}
   monthStats.value = getMonthStats(month)
+  
+  // 更新饮品贴纸
+  updateDrinkStickers()
 }
 
 // 日期点击
@@ -192,7 +224,18 @@ const handleAdd = () => {
 
 // 菜单
 const handleMenu = () => {
-  // TODO: 打开菜单
+  uni.showActionSheet({
+    itemList: ['同步数据', '设置', '关于'],
+    success: ({ tapIndex }) => {
+      if (tapIndex === 0) {
+        uni.showToast({ title: '数据已是最新', icon: 'success' })
+      } else if (tapIndex === 1) {
+        uni.showToast({ title: '设置功能开发中', icon: 'none' })
+      } else if (tapIndex === 2) {
+        uni.showToast({ title: '百淘云 v1.0.0', icon: 'none' })
+      }
+    }
+  })
 }
 
 // 个人中心
@@ -228,7 +271,6 @@ onShow(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  // 适配灵动岛：padding-top = 状态栏高度
   padding-top: var(--status-bar-height);
   height: calc(var(--nav-bar-height));
   padding-left: $container-padding;
@@ -237,47 +279,24 @@ onShow(() => {
 }
 
 .nav-btn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-
-  &:active {
-    transform: scale(0.9);
-    background: var(--primary-container);
-  }
-
+  @include nav-button;
 }
 
 .brand-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
   letter-spacing: 0.02em;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  @include btn-reset;
+  width: $btn-size-md;
+  height: $btn-size-md;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--primary-container);
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     transform: scale(0.9);
@@ -305,8 +324,8 @@ onShow(() => {
 
 .date-title {
   display: block;
-  font-size: 28px;
-  font-weight: 700;
+  font-size: $font-size-headline-lg;
+  font-weight: $font-weight-bold;
   line-height: 36px;
   color: var(--primary);
   margin-bottom: 4px;
@@ -315,7 +334,7 @@ onShow(() => {
 
 .date-subtitle {
   display: block;
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   line-height: 20px;
   color: var(--on-surface-variant);
 }
@@ -323,13 +342,13 @@ onShow(() => {
 // 日历卡片
 .calendar-card {
   background: var(--surface);
-  border-radius: 28px;
+  border-radius: $radius-2xl;
   padding: 28px 20px 32px;
   box-shadow: $shadow-card;
   margin-bottom: 28px;
   overflow: hidden;
   animation: cardEnter 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     transform: scale(0.99);
@@ -349,8 +368,8 @@ onShow(() => {
 
 .week-label {
   text-align: center;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
   line-height: 16px;
   letter-spacing: 0.05em;
   color: var(--on-surface-variant);
@@ -375,9 +394,9 @@ onShow(() => {
 
   &.today {
     .day-content {
-      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      background: $primary-gradient;
       color: var(--on-primary);
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
       transform: scale(1.1);
     }
@@ -397,9 +416,9 @@ onShow(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
+  border-radius: $radius-md;
   background: var(--surface-container);
-  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     background: var(--surface-container-high);
@@ -408,8 +427,8 @@ onShow(() => {
 }
 
 .day-number {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--on-surface);
 }
 
@@ -423,7 +442,7 @@ onShow(() => {
 // 统计卡片
 .stats-card {
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: $radius-xl;
   padding: 24px;
   box-shadow: $shadow-card;
   display: flex;
@@ -432,7 +451,7 @@ onShow(() => {
   position: relative;
   overflow: hidden;
   animation: cardEnter 0.6s cubic-bezier(0.32, 0.72, 0, 1);
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     transform: scale(0.99);
@@ -459,13 +478,13 @@ onShow(() => {
 }
 
 .stats-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
   line-height: 16px;
   letter-spacing: 0.05em;
   color: var(--on-surface-variant);
   text-transform: uppercase;
+  display: block;
   margin-bottom: 4px;
 }
 
@@ -477,25 +496,25 @@ onShow(() => {
 }
 
 .stats-number {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: $font-size-display-lg;
+  font-weight: $font-weight-bold;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  background: $primary-gradient;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .stats-unit {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--on-surface-variant);
 }
 
 .stats-store {
   display: block;
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   color: var(--secondary);
   margin-top: 4px;
 }
@@ -542,7 +561,6 @@ onShow(() => {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  // 适配底部安全区域
   padding: 16px 24px;
   padding-bottom: calc(32px + var(--safe-area-bottom));
   background: rgba(250, 250, 250, 0.8);
@@ -552,46 +570,10 @@ onShow(() => {
 }
 
 .nav-item {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  min-height: 48px;
-  max-width: 48px;
-  max-height: 48px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: var(--on-surface-variant);
-  padding: 0;
-  margin: 0;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:active {
-    transform: scale(0.9);
-  }
-
-  &.active {
-    color: var(--primary);
-    background: var(--primary-container);
-  }
-
+  @include nav-item-button;
 
   &.fab {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    color: var(--on-primary);
-    width: 56px;
-    height: 56px;
-    min-width: 56px;
-    min-height: 56px;
-    max-width: 56px;
-    max-height: 56px;
-    box-shadow: $shadow-fab;
+    @include fab-button;
   }
 }
 </style>

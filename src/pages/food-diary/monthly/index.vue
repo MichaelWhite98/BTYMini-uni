@@ -74,10 +74,12 @@
       </view>
 
       <!-- 本月影像 -->
-      <view class="gallery-section">
+      <view v-if="monthPhotos.length > 0" class="gallery-section">
         <view class="gallery-header">
           <text class="section-title">本月影像</text>
-          <button class="view-all-btn">查看全部</button>
+          <button v-if="monthPhotos.length > 3" class="view-all-btn" @tap="handleViewAll">
+            查看全部
+          </button>
         </view>
         <scroll-view scroll-x class="gallery-scroll">
           <view v-for="photo in monthPhotos" :key="photo.id" class="photo-card">
@@ -88,6 +90,15 @@
             <text class="photo-title">{{ photo.title }}</text>
           </view>
         </scroll-view>
+      </view>
+      
+      <!-- 空状态 -->
+      <view v-if="monthRecords.length === 0" class="empty-state">
+        <view class="empty-icon">
+          <uni-icons type="calendar" size="48"></uni-icons>
+        </view>
+        <text class="empty-title">本月还没有记录</text>
+        <text class="empty-subtitle">点击下方加号开始记录第一杯饮品吧</text>
       </view>
     </scroll-view>
 
@@ -107,9 +118,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { getMonthStats } from '@/utils/food-diary/index.js'
+import { ref, computed, onMounted } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { getMonthStats, getRecordsByMonth } from '@/utils/food-diary/index.js'
 
 // 用户头像
 const userAvatar = ref('https://lh3.googleusercontent.com/aida-public/AB6AXuDxK0FtI70tBgi3Rcf5EKWVf2m2LKa_1Sa9DWSBerAC0KVCySKMDKNI6dCujffPKGQLSfkwgAq15c0mub16eLOBNOdXqavF1rOnAnoEE02VldtcyZY2oolU61wH0KUvU3elajJ3OHEkPGY_2polOtaQX2rsuu-P1Sv6ekuSHSM1j0ApOYMSGQ4sdHamWudiSviZ5qMeQBRyxWl9I7TcJNNLxe1GunQCWz9u-dTHn4CNRxoXuef70hDPks0jyUpqgtCCND2R-hUAEqs')
@@ -125,64 +136,92 @@ const monthStats = ref({
   storeCount: 0
 })
 
+// 月度记录
+const monthRecords = ref([])
+
 // 时间周期标题
 const periodTitle = computed(() => {
   const [year, month] = currentMonth.value.split('-')
   return `${year}年${parseInt(month)}月`
 })
 
-// 饮品分布数据
-const drinkDistribution = ref([
-  { name: '拿铁', count: 3, percentage: 50 },
-  { name: '美式', count: 2, percentage: 33 },
-  { name: '抹茶', count: 1, percentage: 17 }
-])
-
-// 最常探访店铺
-const topStores = ref([
-  {
-    name: '星巴克甄选',
-    type: '精品咖啡馆',
-    icon: 'shop',
-    visits: 4
-  },
-  {
-    name: '瑞幸咖啡',
-    type: '社区咖啡店',
-    icon: 'fire',
-    visits: 2
+// 饮品分布数据 - 根据实际记录计算
+const drinkDistribution = computed(() => {
+  const categoryMap = new Map()
+  
+  monthRecords.value.forEach(record => {
+    const category = record.category || 'other'
+    const count = categoryMap.get(category) || 0
+    categoryMap.set(category, count + 1)
+  })
+  
+  const total = monthRecords.value.length || 1
+  const categoryNames = {
+    coffee: '咖啡',
+    americano: '美式',
+    latte: '拿铁',
+    tea: '茶饮',
+    juice: '果汁',
+    other: '其他'
   }
-])
+  
+  return Array.from(categoryMap.entries())
+    .map(([category, count]) => ({
+      name: categoryNames[category] || category,
+      count,
+      percentage: Math.round((count / total) * 100)
+    }))
+    .sort((a, b) => b.count - a.count)
+})
 
-// 本月照片
-const monthPhotos = ref([
-  {
-    id: 1,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAL8ZAQI5uRPdJnggjuGL-hBMQ6ms1nLzUbM1gsoClYG9RUj59PBck1jJG0x73AkKlDS5jDlsarSedNo-59yQBuPqCQYIN4n2-OB5ikPrXeVpnpYlJBxrOSZdg2jlkwRoJKXPaCaH94-SlsNDL0XLzql315eYv66l0Syg3IEMFGkkNWx1ZIPv-YUthTGnjsErySIpghWoEd1sqKf0elz0uKuxFQ2wWq9Kqq0UjgaRQQAE92sJH2tn5CyeaUweEG2MKWkgF-r7OQm2w',
-    date: '6月12日',
-    title: '燕麦拿铁'
-  },
-  {
-    id: 2,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDA2ycMo_Pc5O2fMLI1CaBLQLdfGjtBt1_kNbsxeGA4QZ9u_cCIL4qLsk0qPp_Cw9whRC9s7z0usc7EebY-mruzZWwquSlzbHqgIYzXc-saJD99nQfaiOXWlKMi-rJiD8BIeSmnsb9EajEYJAl4saJYo4gnDF7CVdDdkaAJcMeI3Hu3t6d2h26uzoZsj7gnkRIqQxJdIyGom5vxjV3Tz0FTFJltYb4F_ijkuHOjh5I-h0hn3APo-8SobIODfyMGsToBWna9DQ6D8gs',
-    date: '6月08日',
-    title: '冰美式'
-  },
-  {
-    id: 3,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAGsmE87ys7s_xB8GSvMIBzbWzeEaTZaGYabBK5A_HXhZTTxiXnA7GBOYS4GdEsWIPWji6iWr3sV8TSmqn69nWO1u4G7Xp7t1JAN4ccDhAORFcB2nqRt7XlIRYWElrdK6qXmZabn4UWqBNFN5d3A-Exesd-gwdPIVzFIXND4Fse3_ZNET5AwVsfXwC_N1Fq6P01t9Af5fh6pgFieIcVmJoPk6hpDwmUm9cJ3BmXoK8uvMZ9BpjBuUR5D-7_3VgksvEY2R2GC7gZdrs',
-    date: '6月03日',
-    title: '抹茶拿铁'
-  }
-])
+// 最常探访店铺 - 根据实际记录计算
+const topStores = computed(() => {
+  const storeMap = new Map()
+  
+  monthRecords.value.forEach(record => {
+    const storeName = record.storeName || (record.location && record.location.name)
+    if (storeName) {
+      const count = storeMap.get(storeName) || 0
+      storeMap.set(storeName, count + 1)
+    }
+  })
+  
+  return Array.from(storeMap.entries())
+    .map(([name, visits]) => ({
+      name,
+      type: '咖啡店',
+      icon: 'shop',
+      visits
+    }))
+    .sort((a, b) => b.visits - a.visits)
+    .slice(0, 5)
+})
+
+// 本月照片 - 从实际记录中获取
+const monthPhotos = computed(() => {
+  return monthRecords.value
+    .filter(record => record.images && record.images.length > 0)
+    .slice(0, 10)
+    .map(record => ({
+      id: record.id,
+      image: record.images[0],
+      date: record.date ? `${parseInt(record.date.slice(5, 7))}月${parseInt(record.date.slice(8, 10))}日` : '',
+      title: record.description || '饮品'
+    }))
+})
 
 onLoad(() => {
+  loadMonthData()
+})
+
+onShow(() => {
   loadMonthData()
 })
 
 // 加载月份数据
 const loadMonthData = () => {
   monthStats.value = getMonthStats(currentMonth.value)
+  monthRecords.value = getRecordsByMonth(currentMonth.value)
 }
 
 // 返回
@@ -197,12 +236,18 @@ const handleCalendar = () => {
 
 // 添加
 const handleAdd = () => {
-  uni.navigateTo({ url: '/pages/food-diary/add/index' })
+  const today = new Date().toISOString().slice(0, 10)
+  uni.navigateTo({ url: `/pages/food-diary/add/index?date=${today}` })
 }
 
 // 个人中心
 const handleProfile = () => {
   uni.navigateTo({ url: '/pages/food-diary/profile/index' })
+}
+
+// 查看全部照片
+const handleViewAll = () => {
+  uni.showToast({ title: '查看全部功能开发中', icon: 'none' })
 }
 </script>
 
@@ -224,56 +269,32 @@ const handleProfile = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  // 适配灵动岛：padding-top = 状态栏高度
   padding-top: var(--status-bar-height);
   height: calc(var(--nav-bar-height));
   padding-left: $container-padding;
   padding-right: $container-padding;
   background: var(--background);
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 }
 
 .nav-btn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-  box-sizing: border-box;
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-
-  &:active {
-    transform: scale(0.9);
-    background: var(--primary-container);
-  }
-
+  @include nav-button;
 }
 
-
 .page-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  @include btn-reset;
+  width: $btn-size-md;
+  height: $btn-size-md;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--primary-container);
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     transform: scale(0.9);
@@ -301,20 +322,17 @@ const handleProfile = () => {
 }
 
 .period-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 16px;
-  letter-spacing: 0.05em;
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
   color: var(--on-surface-variant);
-  text-transform: uppercase;
+  display: block;
   margin-bottom: 4px;
 }
 
 .period-title {
   display: block;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
   line-height: 36px;
   color: var(--primary);
   letter-spacing: -0.02em;
@@ -330,14 +348,14 @@ const handleProfile = () => {
 
 .stat-card {
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: $radius-xl;
   padding: $spacing-lg;
   box-shadow: $shadow-card;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   aspect-ratio: 1;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
   animation: cardEnter 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 
   &:active {
@@ -346,8 +364,8 @@ const handleProfile = () => {
 }
 
 .stat-label {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
   color: var(--primary);
   margin-bottom: 8px;
 }
@@ -359,25 +377,25 @@ const handleProfile = () => {
 }
 
 .stat-number {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: $font-size-display-lg;
+  font-weight: $font-weight-bold;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  background: $primary-gradient;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .stat-unit {
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   color: var(--on-surface-variant);
 }
 
 // 饮品分布卡片
 .drink-distribution-card {
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: $radius-xl;
   padding: $spacing-lg;
   box-shadow: $shadow-card;
   margin-bottom: 32px;
@@ -385,8 +403,8 @@ const handleProfile = () => {
 }
 
 .section-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
   margin-bottom: $spacing-lg;
 }
@@ -414,8 +432,8 @@ const handleProfile = () => {
 }
 
 .drink-count {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
 }
 
@@ -429,7 +447,7 @@ const handleProfile = () => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  background: $primary-gradient;
   border-radius: 4px;
   transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -448,11 +466,11 @@ const handleProfile = () => {
 .store-item {
   background: var(--surface);
   padding: $spacing-md;
-  border-radius: 20px;
+  border-radius: $radius-xl;
   box-shadow: $shadow-card;
   display: flex;
   align-items: center;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
   overflow: hidden;
   animation: cardEnter 0.7s cubic-bezier(0.32, 0.72, 0, 1);
 
@@ -462,8 +480,8 @@ const handleProfile = () => {
 }
 
 .store-icon {
-  width: 48px;
-  height: 48px;
+  width: $btn-size-lg;
+  height: $btn-size-lg;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -481,8 +499,8 @@ const handleProfile = () => {
 
 .store-name {
   display: block;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--on-surface);
   margin-bottom: 4px;
   overflow: hidden;
@@ -491,7 +509,7 @@ const handleProfile = () => {
 }
 
 .store-type {
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   color: var(--on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -507,14 +525,14 @@ const handleProfile = () => {
 .store-visits {
   display: block;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
   line-height: 1.2;
 }
 
 .store-visits-label {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
   color: var(--on-surface-variant);
 }
 
@@ -531,14 +549,13 @@ const handleProfile = () => {
 }
 
 .view-all-btn {
-  font-size: 12px;
-  font-weight: 700;
+  @include btn-reset;
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
   color: var(--primary);
-  background: transparent;
-  border: none;
   padding: 8px $spacing-md;
   border-radius: $radius-default;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     transform: scale(0.95);
@@ -562,7 +579,7 @@ const handleProfile = () => {
 .photo-image {
   width: 100%;
   aspect-ratio: 4/5;
-  border-radius: 24px;
+  border-radius: $radius-xl;
   box-shadow: $shadow-card;
   margin-bottom: 8px;
 }
@@ -572,18 +589,53 @@ const handleProfile = () => {
   margin-top: -40px;
   padding: $spacing-md;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent);
-  border-radius: 0 0 24px 24px;
+  border-radius: 0 0 $radius-xl $radius-xl;
 }
 
 .photo-date {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: $font-size-label-caps;
+  font-weight: $font-weight-bold;
   color: white;
 }
 
 .photo-title {
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   color: var(--on-surface);
+}
+
+// 空状态
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-container);
+  border-radius: 50%;
+  margin-bottom: 24px;
+  color: var(--on-surface-variant);
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: $font-weight-semibold;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.empty-subtitle {
+  font-size: $font-size-body-sm;
+  color: var(--on-surface-variant);
+  line-height: 1.5;
 }
 
 // 底部导航栏
@@ -596,7 +648,6 @@ const handleProfile = () => {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  // 适配底部安全区域
   padding: 16px 24px;
   padding-bottom: calc(32px + var(--safe-area-bottom));
   background: rgba(250, 250, 250, 0.8);
@@ -606,33 +657,6 @@ const handleProfile = () => {
 }
 
 .nav-item {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  min-height: 48px;
-  max-width: 48px;
-  max-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: var(--on-surface-variant);
-  padding: 0;
-  margin: 0;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  overflow: hidden;
-  box-sizing: border-box;
-
-  &:active {
-    transform: scale(0.9);
-  }
-
-  &.active {
-    color: var(--primary);
-    background: var(--primary-container);
-  }
-
+  @include nav-item-button;
 }
 </style>

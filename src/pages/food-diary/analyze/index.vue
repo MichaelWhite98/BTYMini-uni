@@ -317,26 +317,7 @@ onUnload(() => {
 }
 
 .nav-btn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  border-radius: 50%;
-
-  &:active {
-    background: var(--surface-container);
-    transform: scale(0.95);
-  }
+  @include nav-button;
 
   &.ghost {
     color: var(--on-surface-variant);
@@ -344,8 +325,8 @@ onUnload(() => {
 }
 
 .page-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
 }
 
@@ -357,7 +338,7 @@ onUnload(() => {
 .hero-panel {
   position: relative;
   height: 320px;
-  border-radius: 28px;
+  border-radius: $radius-2xl;
   overflow: hidden;
   background: var(--surface-container);
   box-shadow: $shadow-card;
@@ -386,7 +367,7 @@ onUnload(() => {
   gap: 6px;
   min-height: 32px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: $radius-full;
   background: rgba(255, 255, 255, 0.16);
   color: #fff;
   backdrop-filter: blur(8px);
@@ -395,18 +376,18 @@ onUnload(() => {
 .hero-chip-text {
   color: #fff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 .hero-title {
   font-size: 24px;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
   line-height: 32px;
   color: #fff;
 }
 
 .hero-subtitle {
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   line-height: 20px;
   color: rgba(255, 255, 255, 0.86);
 }
@@ -415,14 +396,14 @@ onUnload(() => {
 .tips-card {
   margin-top: 20px;
   padding: 20px;
-  border-radius: 24px;
+  border-radius: $radius-xl;
   background: var(--surface);
   box-shadow: $shadow-card;
 }
 
 .spinner-wrap {
-  width: 56px;
-  height: 56px;
+  width: $btn-size-xl;
+  height: $btn-size-xl;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -440,8 +421,8 @@ onUnload(() => {
 .section-title,
 .tips-title {
   display: block;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
 }
 
@@ -450,7 +431,7 @@ onUnload(() => {
 .tips-copy {
   display: block;
   margin-top: 8px;
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   line-height: 20px;
   color: var(--on-surface-variant);
 }
@@ -476,16 +457,18 @@ onUnload(() => {
 }
 
 .result-card {
+  @include btn-reset;
   width: 100%;
   padding: 14px;
   border: 2px solid transparent;
-  border-radius: 24px;
+  border-radius: $radius-xl;
   background: var(--surface);
   box-shadow: $shadow-card;
   display: flex;
   align-items: center;
   gap: 14px;
   text-align: left;
+  @include transition-base;
 
   &:active {
     transform: scale(0.99);
@@ -500,7 +483,7 @@ onUnload(() => {
 .result-image {
   width: 88px;
   height: 88px;
-  border-radius: 20px;
+  border-radius: $radius-xl;
   background: var(--surface-container);
   flex-shrink: 0;
 }
@@ -518,8 +501,8 @@ onUnload(() => {
 }
 
 .result-label {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
 }
 
@@ -531,7 +514,7 @@ onUnload(() => {
 .result-meta {
   display: block;
   margin-top: 6px;
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   color: var(--on-surface-variant);
 }
 
@@ -540,6 +523,7 @@ onUnload(() => {
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 50;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -549,28 +533,40 @@ onUnload(() => {
   -webkit-backdrop-filter: blur(12px);
 }
 
-.primary-btn,
-.secondary-btn {
-  min-height: 52px;
-  border: none;
-  border-radius: 18px;
-  font-size: 15px;
-  font-weight: 600;
-}
-
 .primary-btn {
+  @include btn-reset;
+  min-height: 52px;
   background: var(--primary);
   color: #fff;
+  border-radius: $radius-lg;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-semibold;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
 
   &[disabled] {
     opacity: 0.4;
+    pointer-events: none;
   }
 }
 
 .secondary-btn {
+  @include btn-reset;
+  min-height: 52px;
   background: var(--surface);
   color: var(--primary);
+  border-radius: $radius-lg;
+  font-size: $font-size-body-sm;
+  font-weight: $font-weight-semibold;
   box-shadow: $shadow-card;
+  @include transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 @keyframes spin {

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Subject Cutout Analysis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .gradient-primary {
+            background: linear-gradient(135deg, #006860 0%, #008379 100%);
+        }
+        .verdant-shadow {
+            box-shadow: 0 10px 30px -5px rgba(17, 153, 142, 0.12);
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-soft {
+            animation: pulse-soft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .mask-overlay {
+            mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#2a655f",
+                        "tertiary-container": "#457e77",
+                        "secondary": "#006d32",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeeeee",
+                        "tertiary-fixed-dim": "#97d2c9",
+                        "primary-container": "#008379",
+                        "tertiary-fixed": "#b3eee5",
+                        "on-primary-fixed": "#00201d",
+                        "on-tertiary-container": "#f4fffc",
+                        "surface-container-low": "#f3f3f3",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2f3131",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-container": "#4dfe8a",
+                        "inverse-primary": "#68d8cc",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#005224",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#006860",
+                        "outline": "#6d7a77",
+                        "on-secondary-container": "#007235",
+                        "on-primary-container": "#f3fffc",
+                        "surface-container-high": "#e8e8e8",
+                        "on-background": "#1a1c1c",
+                        "outline-variant": "#bcc9c6",
+                        "surface": "#f9f9f9",
+                        "background": "#f9f9f9",
+                        "on-surface-variant": "#3d4947",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed-dim": "#68d8cc",
+                        "surface-dim": "#dadada",
+                        "on-tertiary-fixed": "#00201d",
+                        "surface-bright": "#f9f9f9",
+                        "on-surface": "#1a1c1c",
+                        "on-secondary-fixed": "#00210b",
+                        "primary-fixed": "#86f5e8",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#006a62",
+                        "on-primary-fixed-variant": "#00504a",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#0e4f49",
+                        "secondary-fixed": "#64ff92",
+                        "secondary-fixed-dim": "#23e373"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "40px",
+                        "stack-sm": "8px",
+                        "stack-lg": "48px",
+                        "gutter": "16px",
+                        "stack-md": "24px",
+                        "unit": "4px",
+                        "container-padding-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "display-lg-mobile": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["13px", {"lineHeight": "18px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 glass-effect bg-surface/70 border-b border-white/30 px-container-padding-mobile h-16 flex items-center justify-between">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/20 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary">主体抠图</h1>
+<button class="text-on-surface-variant font-label-sm px-4 py-2 hover:opacity-80 transition-opacity">
+            Skip
+        </button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 mt-16 pb-32 px-container-padding-mobile pt-stack-md flex flex-col items-center">
+<!-- Status Badge -->
+<div class="mb-stack-md flex items-center gap-2 px-4 py-2 bg-secondary-container/20 rounded-full border border-secondary-container/30">
+<span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-label-sm font-label-sm text-on-secondary-container">Analysis Complete</span>
+</div>
+<!-- Large Image Preview Card -->
+<div class="relative w-full aspect-[4/5] max-w-[480px] rounded-[28px] overflow-hidden bg-surface-container-highest verdant-shadow group">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover grayscale-[0.3]" data-alt="A high-quality studio portrait of a stylish young person wearing a minimalist green and white tech-wear jacket. The background is a crisp, clean light gray studio setting with soft high-key lighting. The style is modern minimalist with a fresh, vibrant aesthetic, using the brand's primary green colors in the clothing accents. The subject's expression is confident and serene, embodying clarity and vitality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbcncZXDnhiA7GpNFy0wdCZ2-fhjTUPjDvKi30AORMxhT2z7WLLxs2CWzOKjE4YBUegXLb7PVIYYBqwvfAsq-nVKWG5lX9fvUbrikte_iK7-KYQWq8fyAv4yG1ChSUuyD9M2Mof8uQhug4EO_zRH0CAOrTRQmSQO0NDcrRYD9DGSgZZjiuxTyrWuSC_ZPVCyraB8UhTDHVqwrYgpgn4vMgOR9WH8wXqn8jfTmlmFv2CxduQ-a-tmhSNihSi4jlhaHVstEiWji-1Rw"/>
+</div>
+<!-- Analysis Scanning Effect -->
+<div class="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-primary animate-[scan_4s_ease-in-out_infinite]"></div>
+</div>
+<!-- Subject Overlay Selection (Simulated) -->
+<div class="absolute inset-0 z-20 flex items-center justify-center">
+<div class="w-3/4 h-3/4 border-2 border-primary rounded-xl bg-primary/5 backdrop-blur-[2px] flex items-center justify-center animate-pulse-soft">
+<div class="absolute -top-3 -left-3 bg-primary text-on-primary text-[10px] px-2 py-1 rounded-sm">SUBJECT_01</div>
+</div>
+</div>
+<!-- Interaction Hints -->
+<div class="absolute bottom-6 left-6 right-6 z-30 flex justify-between items-end">
+<div class="glass-effect bg-white/40 border border-white/50 px-4 py-2 rounded-2xl text-on-surface text-[12px]">
+<span class="font-bold">Detected:</span> 2 Elements
+                </div>
+<div class="w-12 h-12 glass-effect bg-primary/80 flex items-center justify-center rounded-full text-white active:scale-90 transition-all cursor-pointer">
+<span class="material-symbols-outlined">zoom_in</span>
+</div>
+</div>
+</div>
+<!-- Selection List -->
+<div class="w-full max-w-[480px] mt-stack-lg space-y-gutter">
+<h2 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest px-1">Candidates</h2>
+<!-- Subject 1 (Recommended) -->
+<button class="w-full flex items-center p-4 bg-white border-2 border-primary rounded-lg verdant-shadow active:scale-[0.98] transition-all text-left">
+<div class="w-16 h-16 rounded-md overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="A clean cutout thumbnail showing only the person from the main portrait, with no background. The subject is wearing the green and white tech-wear jacket. The lighting is bright and professional, highlighting the crisp edges of the cutout against a transparent-looking white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC250TJOZOO-vvV27N2AIB17vqgeVVAwH1gCQQW4Ca5BXBYEVNq3jQWP7sfccA5urGl8F3IsYRCkO3VriiB7J2FabWf7O2mkhdd0G4W8ajgfYfyeni7qIdzf3ovniFCpN4nX5ocGIdQXsT954p5JYrv96RAqpnKvskZ7OCIv_QkKpDdVlGJNAg_yo1M-9VClnnQhSs6hexcNu3bD2oQSjAAEI9BusinAFYx8_0wSyio7qFh93yx6MBTcDXLuGeJDJH_Ee-ye87JTtA"/>
+</div>
+<div class="ml-4 flex-1">
+<div class="flex items-center gap-2">
+<p class="font-headline-md text-[16px] text-on-surface">Subject 1</p>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded-full font-bold">Recommended</span>
+</div>
+<p class="text-label-sm text-on-surface-variant">Main person portrait (98% confidence)</p>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center bg-primary">
+<span class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+</button>
+<!-- Subject 2 -->
+<button class="w-full flex items-center p-4 bg-white border-2 border-transparent rounded-lg hover:border-outline-variant/30 active:scale-[0.98] transition-all text-left">
+<div class="w-16 h-16 rounded-md overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="A clean cutout thumbnail of a secondary object, possibly a minimalist design prop or a plant leaf with sharp edges and vibrant green color, isolated from the background. The style is consistent with the modern minimalist studio aesthetic, showcasing sharp AI edge detection." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxdN9owAk3mUTQmy7zwHOmk7FhRyosp2cLsH7uqefzRCRC5K7at67J4_IW9U0jRgqL23NWV8W6dWd4AWs2Lxbqzijx61jgF9hZK1GtbOSwdd9gV8XqhGjNQlQgiBpI4r0IbRIiNFpYsMPXSdyD3b0_U5RLqXI_2ASWkBiCPEmmlVHG7en_vq5_hNWv169-ib6PdrTaVkaNx8zjlEdlLIW4Rd5_1mpYLArTqshUam1htwhRJrzi06sgSlTox18w3VcHcRf8ram_pGs"/>
+</div>
+<div class="ml-4 flex-1">
+<p class="font-headline-md text-[16px] text-on-surface">Subject 2</p>
+<p class="text-label-sm text-on-surface-variant">Background element (82% confidence)</p>
+</div>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant"></div>
+</button>
+</div>
+</main>
+<!-- Bottom Action Bar -->
+<footer class="fixed bottom-0 w-full z-50 glass-effect bg-surface/80 border-t border-white/30 px-container-padding-mobile pb-8 pt-4">
+<div class="max-w-[480px] mx-auto flex gap-gutter">
+<button class="flex-1 h-14 rounded-lg border-2 border-primary text-primary font-headline-md text-[16px] hover:bg-primary/5 active:scale-95 transition-all">
+                Skip Cutout
+            </button>
+<button class="flex-[1.5] h-14 rounded-lg gradient-primary text-white font-headline-md text-[16px] shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                Use Current
+            </button>
+</div>
+</footer>
+<style>
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+    </style>
+<script>
+        // Micro-interactions for button selection
+        const candidateButtons = document.querySelectorAll('main button');
+        candidateButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                candidateButtons.forEach(b => {
+                    b.classList.remove('border-primary', 'verdant-shadow');
+                    b.classList.add('border-transparent');
+                    const check = b.querySelector('.material-symbols-outlined.text-white');
+                    if(check) {
+                        check.parentElement.classList.remove('bg-primary', 'border-primary');
+                        check.parentElement.classList.add('border-outline-variant');
+                        check.remove();
+                    }
+                });
+                
+                btn.classList.add('border-primary', 'verdant-shadow');
+                btn.classList.remove('border-transparent');
+                
+                const indicator = btn.querySelector('div:last-child');
+                indicator.classList.remove('border-outline-variant');
+                indicator.classList.add('bg-primary', 'border-primary');
+                indicator.innerHTML = '<span class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings: \'wght\' 700;">check</span>';
+            });
+        });
+    </script>
+</body></html>

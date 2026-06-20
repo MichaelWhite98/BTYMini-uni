@@ -11,48 +11,67 @@
 
 // ==================== 配色系统 ====================
 
-// 主色调 - 清新青绿渐变 (Primary)
-$primary: #11998e;
+// 主色调 - 清新青绿渐变 (Primary) - 基于 Stitch "Verdant Clarity" 设计
+$primary: #006860;
 $primary-light: #38ef7d;
-$primary-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-$primary-container: #e8f5f3;
+$primary-gradient: linear-gradient(135deg, #006860 0%, #008379 100%);
+$primary-gradient-full: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+$primary-container: #008379;
+$primary-fixed: #86f5e8;
+$primary-fixed-dim: #68d8cc;
 $on-primary: #ffffff;
-$on-primary-container: #0a3d2e;
+$on-primary-container: #f3fffc;
+$on-primary-fixed: #00201d;
+$on-primary-fixed-variant: #00504a;
 
-// 次要色 - 温暖橙色调 (Secondary)
-$secondary: #f57c00;
-$secondary-container: #fff3e0;
+// 次要色 - 清新绿色 (Secondary) - 基于 Stitch 设计
+$secondary: #006d32;
+$secondary-container: #4dfe8a;
+$secondary-fixed: #64ff92;
+$secondary-fixed-dim: #23e373;
 $on-secondary: #ffffff;
-$on-secondary-container: #e65100;
+$on-secondary-container: #007235;
+$on-secondary-fixed: #00210b;
+$on-secondary-fixed-variant: #005224;
 
 // 第三色 - 深色强调 (Tertiary)
-$tertiary: #2d2d2d;
-$tertiary-container: #f5f5f5;
+$tertiary: #2a655f;
+$tertiary-container: #457e77;
+$tertiary-fixed: #b3eee5;
+$tertiary-fixed-dim: #97d2c9;
 $on-tertiary: #ffffff;
-$on-tertiary-container: #1a1a1a;
+$on-tertiary-container: #f4fffc;
+$on-tertiary-fixed: #00201d;
+$on-tertiary-fixed-variant: #0e4f49;
 
-// 背景和表面 (Background & Surface)
-$background: #fafafa;
-$surface: #ffffff;
-$surface-dim: #f5f5f5;
-$surface-bright: #ffffff;
-$surface-variant: #e8f5f3;
+// 背景和表面 (Background & Surface) - 基于 Stitch 设计
+$background: #f9f9f9;
+$surface: #f9f9f9;
+$surface-dim: #dadada;
+$surface-bright: #f9f9f9;
+$surface-variant: #e2e2e2;
+$surface-tint: #006a62;
 
 // 表面容器层级
 $surface-container-lowest: #ffffff;
-$surface-container-low: #fafafa;
-$surface-container: #f5f5f5;
-$surface-container-high: #f0f0f0;
-$surface-container-highest: #e8e8e8;
+$surface-container-low: #f3f3f3;
+$surface-container: #eeeeee;
+$surface-container-high: #e8e8e8;
+$surface-container-highest: #e2e2e2;
 
-// 文本颜色 (Text Colors)
-$on-background: #1a1a1a;
-$on-surface: #1a1a1a;
-$on-surface-variant: #666666;
+// 反色表面 (Inverse Surface)
+$inverse-surface: #2f3131;
+$inverse-on-surface: #f0f1f1;
+$inverse-primary: #68d8cc;
+
+// 文本颜色 (Text Colors) - 基于 Stitch 设计
+$on-background: #1a1c1c;
+$on-surface: #1a1c1c;
+$on-surface-variant: #3d4947;
 
 // 轮廓 (Outline)
-$outline: #e0e0e0;
-$outline-variant: #f0f0f0;
+$outline: #6d7a77;
+$outline-variant: #bcc9c6;
 
 // 成功状态 (Success)
 $success: #38ef7d;
@@ -151,7 +170,83 @@ $ease-out: cubic-bezier(0.32, 0.72, 0, 1);
 $ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 $ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
+// ==================== 按钮尺寸系统 ====================
+
+// 按钮尺寸变量
+$btn-size-sm: 32px;
+$btn-size-md: 40px;
+$btn-size-lg: 48px;
+$btn-size-xl: 56px;
+
 // ==================== Mixin 定义 ====================
+
+// 基础按钮重置
+@mixin btn-reset {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+
+  &::after {
+    border: none;
+  }
+}
+
+// 导航按钮 (40px)
+@mixin nav-button($size: $btn-size-md) {
+  @include btn-reset;
+  width: $size;
+  height: $size;
+  min-width: $size;
+  min-height: $size;
+  max-width: $size;
+  max-height: $size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--primary);
+  overflow: hidden;
+  transition: all $duration-normal $ease-out;
+
+  &:active {
+    transform: scale(0.9);
+    background: var(--primary-container);
+  }
+}
+
+// 底部导航按钮 (48px)
+@mixin nav-item-button {
+  @include nav-button($btn-size-lg);
+  color: var(--on-surface-variant);
+
+  &.active {
+    color: var(--primary);
+    background: var(--primary-container);
+  }
+}
+
+// FAB 浮动按钮 (56px)
+@mixin fab-button {
+  @include nav-button($btn-size-xl);
+  background: $primary-gradient;
+  color: $on-primary;
+  box-shadow: $shadow-fab;
+
+  &:active {
+    transform: scale(0.9);
+  }
+}
+
+// 样式穿透
+@mixin deep($selector) {
+  :deep(#{$selector}) {
+    @content;
+  }
+}
 
 // 基础过渡
 @mixin transition-base {

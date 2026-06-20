@@ -7,66 +7,87 @@
   },
   "pages": [
     {
-      "path": "pages/food-diary/index/index",
+      "path": "pages/index/index",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "饮品记录"
+        "navigationBarTitleText": "百淘云"
       }
     },
     {
-      "path": "pages/food-diary/add/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "添加记录"
-      }
-    },
-    {
-      "path": "pages/food-diary/analyze/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "图片分析"
-      }
-    },
-    {
-      "path": "pages/food-diary/detail/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "饮品详情"
-      }
-    },
-    {
-      "path": "pages/food-diary/store/index",
-      "style": {
-        "navigationStyle": "custom",
-        "navigationBarTitleText": "选择店铺"
-      }
-    },
-    {
-      "path": "pages/food-diary/monthly/index",
+      "path": "pages/monthly/index",
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "本月详情"
       }
     },
     {
-      "path": "pages/food-diary/profile/index",
+      "path": "pages/add/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "添加记录"
+      }
+    },
+    {
+      "path": "pages/profile/index",
       "style": {
         "navigationStyle": "custom",
         "navigationBarTitleText": "个人中心"
       }
     },
     {
-      "path": "pages/test/icons",
+      "path": "pages/detail/index",
       "style": {
-        "navigationBarTitleText": "图标测试"
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "饮品详情"
+      }
+    },
+    {
+      "path": "pages/analyze/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "图片分析"
+      }
+    },
+    {
+      "path": "pages/store/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "店铺详情"
+      }
+    },
+    {
+      "path": "pages/medals/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "勋章馆"
       }
     }
   ],
   "globalStyle": {
     "navigationStyle": "custom",
-    "navigationBarBackgroundColor": "#fef8f5",
+    "navigationBarBackgroundColor": "#f9f9f9",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#fef8f5",
+    "backgroundColor": "#f9f9f9",
     "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#3d4947",
+    "selectedColor": "#006860",
+    "backgroundColor": "#f9f9f9",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/monthly/index",
+        "text": "统计"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
   }
 }

@@ -1,0 +1,33 @@
+{
+  "source": ["src/styles/**/*.scss"],
+  "platforms": {
+    "figma": {
+      "transformGroup": "figma",
+      "buildPath": "figma-tokens/",
+      "files": [
+        {
+          "destination": "colors.json",
+          "format": "figma/color"
+        },
+        {
+          "destination": "spacing.json",
+          "format": "figma/spacing"
+        },
+        {
+          "destination": "typography.json",
+          "format": "figma/typography"
+        }
+      ]
+    },
+    "scss": {
+      "transformGroup": "scss",
+      "buildPath": "src/styles/generated/",
+      "files": [
+        {
+          "destination": "_tokens.scss",
+          "format": "scss/variables"
+        }
+      ]
+    }
+  }
+}

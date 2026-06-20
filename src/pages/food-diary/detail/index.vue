@@ -325,7 +325,6 @@ const handleDelete = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  // 适配灵动岛：padding-top = 状态栏高度
   padding-top: var(--status-bar-height);
   height: calc(var(--nav-bar-height));
   padding-left: $container-padding;
@@ -336,25 +335,16 @@ const handleDelete = () => {
 }
 
 .nav-btn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
+  @include btn-reset;
+  width: $btn-size-md;
+  height: $btn-size-md;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--on-surface-variant);
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
   border-radius: 50%;
+  overflow: hidden;
+  @include transition-base;
 
   &:active {
     transform: scale(0.9);
@@ -368,13 +358,11 @@ const handleDelete = () => {
       opacity: 0.4;
     }
   }
-
 }
 
-
 .page-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
 }
 
@@ -427,8 +415,7 @@ const handleDelete = () => {
   align-items: center;
   justify-content: center;
   background: var(--surface-container);
-  border-radius: 24px;
-
+  border-radius: $radius-xl;
 }
 
 // 信息块
@@ -440,12 +427,12 @@ const handleDelete = () => {
 
 .info-card {
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: $radius-xl;
   padding: $spacing-lg;
   box-shadow: $shadow-card;
   display: flex;
   align-items: center;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
   overflow: hidden;
   animation: cardEnter 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 
@@ -455,15 +442,14 @@ const handleDelete = () => {
 }
 
 .info-icon {
-  width: 40px;
-  height: 40px;
+  width: $btn-size-lg;
+  height: $btn-size-lg;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: $spacing-md;
   color: var(--primary);
   flex-shrink: 0;
-
 }
 
 .info-text {
@@ -477,49 +463,32 @@ const handleDelete = () => {
 
 .arrow {
   color: var(--outline);
+  transition: all $duration-normal $ease-out;
   font-size: 20px;
 }
 
 // 饮品名称输入
 .drink-input {
+  @include btn-reset;
   flex: 1;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
-  background: transparent;
-  border: none;
-  padding: 0;
 }
 
 .favorite-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
+  @include nav-button;
   color: var(--outline);
-  padding: 0;
   margin-left: 8px;
-  position: relative;
-  overflow: hidden;
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-
-  &:active {
-    transform: scale(0.9);
-  }
 
   &.active {
     color: var(--warning);
   }
-
 }
 
 .vision-summary-card {
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: $radius-xl;
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: $shadow-card;
@@ -540,7 +509,7 @@ const handleDelete = () => {
   gap: 6px;
   color: var(--primary);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
 }
 
 .vision-badge-text {
@@ -548,7 +517,7 @@ const handleDelete = () => {
 }
 
 .vision-score {
-  font-size: 12px;
+  font-size: $font-size-label-caps;
   color: var(--on-surface-variant);
 }
 
@@ -561,7 +530,7 @@ const handleDelete = () => {
 .vision-thumb {
   width: 72px;
   height: 72px;
-  border-radius: 18px;
+  border-radius: $radius-lg;
   background: var(--surface-container);
   flex-shrink: 0;
 }
@@ -574,16 +543,15 @@ const handleDelete = () => {
 }
 
 .vision-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
 }
 
 .vision-subtitle {
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   color: var(--on-surface-variant);
 }
-
 
 // 备注卡片
 .note-card {
@@ -596,11 +564,10 @@ const handleDelete = () => {
   align-items: center;
   margin-bottom: 8px;
   color: var(--primary);
-
 }
 
 .note-label {
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   color: var(--on-surface-variant);
 }
 
@@ -614,6 +581,7 @@ const handleDelete = () => {
   font-style: italic;
   background: transparent;
   border: none;
+  resize: none;
 }
 
 // 删除按钮
@@ -624,13 +592,12 @@ const handleDelete = () => {
 }
 
 .delete-btn {
-  font-size: 14px;
+  @include btn-reset;
+  font-size: $font-size-body-sm;
   color: var(--on-surface-variant);
-  background: transparent;
-  border: none;
   padding: $spacing-md;
   border-radius: $radius-default;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     color: var(--error);

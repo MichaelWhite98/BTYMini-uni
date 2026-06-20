@@ -123,11 +123,10 @@ const handleClose = () => {
   bottom: 0;
   left: 0;
   right: 0;
-  // 适配底部安全区域
   padding: 0 $container-padding;
   padding-bottom: calc(48px + var(--safe-area-bottom));
   transform: translateY(100%);
-  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &.show {
     transform: translateY(0);
@@ -143,16 +142,16 @@ const handleClose = () => {
 }
 
 .action-card {
+  @include btn-reset;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: $spacing-lg;
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: $radius-xl;
   box-shadow: $shadow-card;
-  border: none;
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  @include transition-base;
 
   &:active {
     transform: scale(0.98);
@@ -160,42 +159,27 @@ const handleClose = () => {
 }
 
 .action-icon {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
-  min-height: 56px;
-  max-width: 56px;
-  max-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include nav-button($btn-size-xl);
   background: var(--surface-container);
-  border-radius: 50%;
   margin-right: $spacing-lg;
-  color: var(--primary);
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  overflow: hidden;
-  box-sizing: border-box;
 
   .action-card:active & {
     background: var(--primary-container);
     transform: scale(0.95);
   }
-
 }
-
 
 .action-label {
   flex: 1;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-title-md;
+  font-weight: $font-weight-semibold;
   color: var(--primary);
   text-align: left;
 }
 
 .arrow {
   color: var(--outline);
-  transition: color 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: all $duration-normal $ease-out;
 
   .action-card:active & {
     color: var(--primary);
@@ -211,22 +195,14 @@ const handleClose = () => {
 }
 
 .close-btn {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include nav-button(64px);
   background: var(--surface);
-  border-radius: 50%;
   box-shadow: $shadow-card;
   border: 2px solid white;
   color: var(--on-surface-variant);
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 
   &:active {
-    transform: scale(0.9);
     background: var(--surface-container);
   }
-
 }
 </style>

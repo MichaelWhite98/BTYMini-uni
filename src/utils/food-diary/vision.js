@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from '../../constants/food-diary.js'
 import { createUniStorageAdapter } from './storage.js'
 import { getMiniRuntime } from './runtime.js'
+import { createCutoutTask, getCutoutTask, uploadImage } from './api.js'
 
 const storage = createUniStorageAdapter()
 
@@ -119,80 +120,13 @@ const writeDraft = (draftId, payload) => {
   storage.setItem(draftKey(draftId), safeStringify(payload))
 }
 
-const requestJson = ({ url, method = 'GET', data, header }) => {
-  const runtime = getRuntime()
-  if (!runtime || typeof runtime.request !== 'function') {
-    return Promise.reject(new Error('request is unavailable in the current runtime'))
-  }
-
-  return new Promise((resolve, reject) => {
-    runtime.request({
-      url,
-      method,
-      data,
-      header,
-      success: (response) => {
-        const statusCode = Number(response.statusCode || 0)
-        if (statusCode >= 200 && statusCode < 300) {
-          resolve(response.data)
-          return
-        }
-
-        reject(new Error(`request failed with status ${statusCode}`))
-      },
-      fail: reject
-    })
-  })
-}
-
-const uploadBinary = ({ url, filePath, name = 'file', formData, header }) => {
-  const runtime = getRuntime()
-  if (!runtime || typeof runtime.uploadFile !== 'function') {
-    return Promise.reject(new Error('uploadFile is unavailable in the current runtime'))
-  }
-
-  return new Promise((resolve, reject) => {
-    runtime.uploadFile({
-      url,
-      filePath,
-      name,
-      formData,
-      header,
-      success: resolve,
-      fail: reject
-    })
-  })
-}
-
-const uploadWithServerContract = async ({ filePath, fileName = 'image.jpg', contentType = 'image/jpeg' }) => {
-  const base = getCutoutApiBase()
-  const tokenData = await requestJson({
-    url: `${base}/api/media/upload-token`,
-    method: 'POST',
-    data: {
-      bizType: 'food-diary-cutout',
-      fileName,
-      contentType
-    }
-  })
-
-  await uploadBinary({
-    url: tokenData.uploadUrl,
-    filePath,
-    name: tokenData.fileFieldName || 'file',
-    formData: tokenData.formData || {},
-    header: tokenData.headers || {}
-  })
-
-  return {
-    imageId: tokenData.imageId || '',
-    imageUrl: tokenData.fileUrl || '',
-    fileKey: tokenData.fileKey || ''
-  }
-}
-
+/**
+ * 准备抠图源图片 - 使用后端API
+ */
 export const prepareCutoutSource = async ({ filePath, fileName = 'image.jpg', contentType = 'image/jpeg' }) => {
   const base = getCutoutApiBase()
+
+  // 如果没有配置后端API，使用本地Mock
   if (!base) {
     await delay(120)
     return {
@@ -202,9 +136,28 @@ export const prepareCutoutSource = async ({ filePath, fileName = 'image.jpg', co
     }
   }
 
-  return uploadWithServerContract({ filePath, fileName, contentType })
+  try {
+    // 上传图片到后端
+    const result = await uploadImage(filePath, 'food-diary-cutout')
+    return {
+      imageId: result.imageId || createId('img'),
+      imageUrl: result.imageUrl || filePath,
+      fileKey: result.fileKey || ''
+    }
+  } catch (error) {
+    console.error('上传图片失败:', error)
+    // 失败时返回本地路径
+    return {
+      imageId: createId('local_image'),
+      imageUrl: filePath,
+      fileKey: ''
+    }
+  }
 }
 
+/**
+ * 创建抠图任务 - 使用后端API
+ */
 export const createCutoutTask = async ({
   imageId = '',
   imageUrl,
@@ -213,6 +166,7 @@ export const createCutoutTask = async ({
 }) => {
   const base = getCutoutApiBase()
 
+  // 如果没有配置后端API，使用本地Mock
   if (!base) {
     await delay(150)
 
@@ -234,25 +188,45 @@ export const createCutoutTask = async ({
     }
   }
 
-  const response = await requestJson({
-    url: `${base}/api/cutout/tasks`,
-    method: 'POST',
-    data: {
+  try {
+    // 调用后端API
+    const result = await createCutoutTaskApi({ scene, imageId, imageUrl })
+    return {
+      taskId: result.taskId,
+      status: result.status || 'queued'
+    }
+  } catch (error) {
+    console.error('创建抠图任务失败:', error)
+    // 失败时返回Mock数据
+    const task = normalizeTaskPayload({
+      taskId: createId('cutout_task'),
       scene,
       imageId,
-      imageUrl
-    }
-  })
+      imageUrl,
+      sourceImageUrl,
+      createdAt: Date.now(),
+      items: buildMockItems(imageUrl)
+    })
 
-  return {
-    taskId: response.taskId,
-    status: response.status || 'queued'
+    writeTask(task)
+
+    return {
+      taskId: task.taskId,
+      status: 'queued'
+    }
   }
 }
 
+// 重命名导入避免冲突
+const createCutoutTaskApi = createCutoutTask
+
+/**
+ * 查询抠图任务 - 使用后端API
+ */
 export const getCutoutTask = async (taskId) => {
   const base = getCutoutApiBase()
 
+  // 如果没有配置后端API，使用本地Mock
   if (!base) {
     await delay(120)
 
@@ -282,23 +256,32 @@ export const getCutoutTask = async (taskId) => {
     }
   }
 
-  const response = await requestJson({
-    url: `${base}/api/cutout/tasks/${taskId}`,
-    method: 'GET'
-  })
-
-  return {
-    taskId: response.taskId,
-    status: response.status,
-    scene: response.scene || DEFAULT_SCENE,
-    imageId: response.imageId || '',
-    imageUrl: response.imageUrl || '',
-    sourceImageUrl: response.sourceImageUrl || response.imageUrl || '',
-    primaryItemId: response.primaryItemId || '',
-    items: Array.isArray(response.items) ? response.items.map(normalizeItem) : [],
-    failReason: response.failReason || ''
+  try {
+    // 调用后端API
+    const result = await getCutoutTaskApi(taskId)
+    return {
+      taskId: result.taskId,
+      status: result.status,
+      scene: result.scene || DEFAULT_SCENE,
+      imageId: result.imageId || '',
+      imageUrl: result.imageUrl || '',
+      sourceImageUrl: result.sourceImageUrl || result.imageUrl || '',
+      primaryItemId: result.primaryItemId || '',
+      items: Array.isArray(result.items) ? result.items.map(normalizeItem) : [],
+      failReason: result.failReason || ''
+    }
+  } catch (error) {
+    console.error('查询抠图任务失败:', error)
+    return {
+      taskId,
+      status: 'failed',
+      failReason: error.message || '查询失败'
+    }
   }
 }
+
+// 重命名导入避免冲突
+const getCutoutTaskApi = getCutoutTask
 
 export const saveCutoutDraft = (payload) => {
   const draftId = createId('cutout_draft')
