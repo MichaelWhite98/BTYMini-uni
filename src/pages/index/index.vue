@@ -170,6 +170,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getCalendarIndex, getMonthlyStats, getRecordList } from '@/utils/food-diary/api.js'
+import { waitForLogin, getToken } from '@/utils/auth.js'
 
 // 当前日期 - 新的呈现方式
 const currentDay = ref('20')
@@ -432,9 +433,24 @@ const loadAllData = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   initDate()
-  loadAllData()
+
+  // 等待登录完成后再加载数据
+  console.log('[Index] 等待登录完成...')
+  const loginSuccess = await waitForLogin()
+  console.log('[Index] 登录完成，结果:', loginSuccess)
+
+  // 检查是否有 token
+  const token = getToken()
+  if (token) {
+    console.log('[Index] Token 存在，开始加载数据')
+    loadAllData()
+  } else {
+    console.log('[Index] Token 不存在，使用默认数据')
+    // 使用默认空数据显示页面
+    buildCalendarDays({})
+  }
 })
 </script>
 

@@ -61,6 +61,13 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "勋章馆"
       }
+    },
+    {
+      "path": "pages/user/profile",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "编辑资料"
+      }
     }
   ],
   "globalStyle": {

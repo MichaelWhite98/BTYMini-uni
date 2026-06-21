@@ -29,7 +29,7 @@
       </view>
 
       <!-- Subject Cutout Card -->
-      <view class="cutout-card">
+      <view class="cutout-card" @click="showCutoutOptions">
         <view class="cutout-left">
           <view class="cutout-thumb">
             <image v-if="record.cutoutImage" :src="record.cutoutImage" mode="aspectFill" />
@@ -39,12 +39,14 @@
           </view>
           <view class="cutout-info">
             <text class="cutout-label">主体识别</text>
-            <text class="cutout-status">{{ record.cutoutImage ? '已完成识别' : '暂无抠图' }}</text>
+            <text class="cutout-status">{{ record.cutoutImage ? '已完成识别' : '点击智能抠图' }}</text>
           </view>
         </view>
         <view class="cutout-valid">
-          <uni-icons type="checkbox-filled" size="20" color="#006860" />
-          <text class="valid-text">{{ record.cutoutImage ? '有效' : '待处理' }}</text>
+          <uni-icons type="checkbox-filled" size="20" :color="record.cutoutImage ? '#006860' : '#bcc9c6'" />
+          <text class="valid-text" :class="{ 'active': record.cutoutImage }">
+            {{ record.cutoutImage ? '有效' : '待处理' }}
+          </text>
         </view>
       </view>
 
@@ -95,6 +97,7 @@
       <!-- Location Preview Card -->
       <view v-if="record.location && record.latitude" class="location-preview-card">
         <map
+          v-if="showMap"
           class="location-map"
           :latitude="record.latitude"
           :longitude="record.longitude"
@@ -106,6 +109,28 @@
         <view class="location-info">
           <text class="location-name">{{ record.location }}</text>
           <text class="location-address">{{ record.address || '暂无详细地址' }}</text>
+        </view>
+      </view>
+
+      <!-- Frequent Locations -->
+      <view v-if="frequentLocations.length > 0 && !record.location" class="frequent-locations-card">
+        <view class="frequent-header">
+          <text class="frequent-title">常用地点</text>
+        </view>
+        <view class="frequent-list">
+          <view
+            v-for="(loc, index) in frequentLocations"
+            :key="index"
+            class="frequent-item"
+            @click="selectFrequentLocation(loc)"
+          >
+            <uni-icons type="location-filled" size="20" color="#006860" />
+            <view class="frequent-info">
+              <text class="frequent-name">{{ loc.name }}</text>
+              <text class="frequent-address">{{ loc.address }}</text>
+            </view>
+            <text class="frequent-count">{{ loc.useCount }}次</text>
+          </view>
         </view>
       </view>
 
@@ -149,10 +174,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { addRecord } from '@/utils/food-diary/api.js'
-import { chooseLocation } from '@/utils/location.js'
+import { addRecord, uploadImage } from '@/utils/food-diary/api.js'
+import { chooseLocation, getFrequentLocations } from '@/utils/location.js'
+import { networkDiagnosis } from '@/utils/network-diagnosis.js'
+import { smartCutout, detectSubjects, quickCutout } from '@/utils/ai-cutout.js'
 
 const record = ref({
   id: null,
@@ -170,6 +197,8 @@ const record = ref({
 
 const isNewRecord = ref(true)
 const isSaving = ref(false)
+const showMap = ref(false) // 地图懒加载控制
+const frequentLocations = ref([]) // 常用地点列表
 
 // 地图标记数据
 const mapMarkers = computed(() => {
@@ -207,7 +236,31 @@ onLoad((options) => {
     const day = String(today.getDate()).padStart(2, '0')
     record.value.date = `${year}-${month}-${day}`
   }
+
+  // 加载常用地点
+  loadFrequentLocations()
 })
+
+// 页面加载后延迟显示地图（性能优化）
+onMounted(() => {
+  setTimeout(() => {
+    showMap.value = true
+  }, 300)
+
+  // 开发环境：执行网络诊断
+  console.log('🔧 开发环境：执行网络诊断')
+  console.log('💡 提示: 在控制台输入 networkDiagnosis() 查看详细诊断')
+  networkDiagnosis()
+})
+
+// 加载常用地点
+const loadFrequentLocations = async () => {
+  try {
+    frequentLocations.value = await getFrequentLocations()
+  } catch (error) {
+    console.error('加载常用地点失败:', error)
+  }
+}
 
 const goBack = () => {
   uni.navigateBack()
@@ -287,8 +340,29 @@ const saveRecord = async () => {
   } catch (error) {
     uni.hideLoading()
     console.error('保存记录失败:', error)
+
+    // 友好的错误提示
+    let errorMsg = '保存失败，请重试'
+
+    if (error.message && error.message.includes('登录已过期')) {
+      errorMsg = '请先登录'
+
+      // 提示用户设置 Token
+      uni.showModal({
+        title: '需要登录',
+        content: '请先登录后再保存记录。在控制台运行 setDevToken() 或 setRealToken("真实Token")',
+        confirmText: '知道了',
+        success: () => {
+          console.log('\n💡 登录方法：')
+          console.log('1. 在控制台运行: setDevToken()')
+          console.log('2. 或运行: setRealToken("你的真实Token")')
+        }
+      })
+      return
+    }
+
     uni.showToast({
-      title: error.message || '保存失败，请重试',
+      title: errorMsg,
       icon: 'none'
     })
   } finally {
@@ -333,6 +407,132 @@ const selectShop = () => {
   uni.navigateTo({ url: '/pages/store/index' })
 }
 
+/**
+ * 显示智能抠图选项
+ */
+const showCutoutOptions = () => {
+  if (!record.value.image) {
+    uni.showToast({
+      title: '请先上传图片',
+      icon: 'none'
+    })
+    return
+  }
+
+  uni.showActionSheet({
+    itemList: [
+      '智能识别主体',
+      '抠出咖啡杯',
+      '抠出食物',
+      '抠出盘子',
+      '抠出所有主体'
+    ],
+    success: async (res) => {
+      switch (res.tapIndex) {
+        case 0:
+          await handleAutoDetect()
+          break
+        case 1:
+          await handleSmartCutout('咖啡杯')
+          break
+        case 2:
+          await handleSmartCutout('食物')
+          break
+        case 3:
+          await handleSmartCutout('盘子')
+          break
+        case 4:
+          await handleSmartCutout('所有主体')
+          break
+      }
+    }
+  })
+}
+
+/**
+ * 自动识别主体
+ */
+const handleAutoDetect = async () => {
+  try {
+    uni.showLoading({ title: '识别中...' })
+
+    // 上传图片
+    const uploadResult = await uploadImage(record.value.image, 'food-diary')
+
+    // 调用主体识别接口
+    const result = await detectSubjects(uploadResult.url)
+
+    uni.hideLoading()
+
+    if (result.subjects && result.subjects.length > 0) {
+      // 显示识别到的主体列表
+      const subjects = result.subjects.map(s =>
+        `${s.label} (${Math.round(s.confidence * 100)}%)`
+      )
+
+      uni.showActionSheet({
+        itemList: subjects,
+        success: async (res) => {
+          const selected = result.subjects[res.tapIndex]
+          await handleSmartCutout(selected.label)
+        }
+      })
+    } else {
+      uni.showToast({
+        title: '未识别到主体',
+        icon: 'none'
+      })
+    }
+  } catch (error) {
+    uni.hideLoading()
+    console.error('主体识别失败:', error)
+    uni.showToast({
+      title: error.message || '识别失败',
+      icon: 'none'
+    })
+  }
+}
+
+/**
+ * 智能抠图
+ */
+const handleSmartCutout = async (description) => {
+  try {
+    uni.showLoading({ title: '抠图中...' })
+
+    // 上传图片（如果还没有上传）
+    let imageUrl = record.value.image
+    if (!imageUrl.startsWith('http')) {
+      const uploadResult = await uploadImage(record.value.image, 'food-diary')
+      imageUrl = uploadResult.url
+    }
+
+    // 调用智能抠图接口
+    const result = await smartCutout({
+      imageUrl: imageUrl,
+      description: description,
+      returnMask: false
+    })
+
+    uni.hideLoading()
+
+    // 保存抠图结果
+    record.value.cutoutImage = result.cutoutUrl
+
+    uni.showToast({
+      title: '抠图成功',
+      icon: 'success'
+    })
+  } catch (error) {
+    uni.hideLoading()
+    console.error('智能抠图失败:', error)
+    uni.showToast({
+      title: error.message || '抠图失败',
+      icon: 'none'
+    })
+  }
+}
+
 const selectLocation = async () => {
   try {
     const result = await chooseLocation()
@@ -342,10 +542,21 @@ const selectLocation = async () => {
       record.value.address = result.address
       record.value.latitude = result.latitude
       record.value.longitude = result.longitude
+
+      // 重新加载常用地点（更新使用次数）
+      loadFrequentLocations()
     }
   } catch (error) {
     console.error('选择地点失败:', error)
   }
+}
+
+// 选择常用地点
+const selectFrequentLocation = (location) => {
+  record.value.location = location.name
+  record.value.address = location.address
+  record.value.latitude = location.latitude
+  record.value.longitude = location.longitude
 }
 
 const clearLocation = () => {
@@ -582,6 +793,14 @@ const deleteRecord = () => {
   font-size: 13px;
   font-weight: $font-weight-semibold;
   color: $primary;
+
+  &.active {
+    color: $primary;
+  }
+
+  &:not(.active) {
+    color: $on-surface-variant;
+  }
 }
 
 // Info Cards
@@ -670,6 +889,74 @@ const deleteRecord = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+// Frequent Locations Card
+.frequent-locations-card {
+  margin: 16px 0;
+  background: $surface-container-lowest;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(17, 153, 142, 0.08);
+}
+
+.frequent-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid $surface-container;
+}
+
+.frequent-title {
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  color: $on-surface-variant;
+}
+
+.frequent-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.frequent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  transition: background $duration-fast $ease-out;
+
+  &:active {
+    background: rgba(0, 131, 121, 0.05);
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid $surface-container;
+  }
+}
+
+.frequent-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.frequent-name {
+  font-size: 15px;
+  font-weight: $font-weight-semibold;
+  color: $on-surface;
+}
+
+.frequent-address {
+  font-size: 12px;
+  color: $on-surface-variant;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.frequent-count {
+  font-size: 12px;
+  color: $primary;
+  font-weight: $font-weight-semibold;
 }
 
 // Input Section

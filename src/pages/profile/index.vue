@@ -22,12 +22,12 @@
     <scroll-view class="main-content" scroll-y :show-scrollbar="false">
       <!-- Profile Section -->
       <view class="profile-section">
-        <view class="avatar-wrapper">
+        <view class="avatar-wrapper" @click="handleLogin">
           <view class="avatar-container">
-            <image class="avatar-large" src="/static/images/avatar.png" mode="aspectFill" />
+            <image class="avatar-large" :src="user.avatar" mode="aspectFill" />
           </view>
           <button class="edit-btn">
-            <uni-icons type="compose" size="16" color="#ffffff" />
+            <uni-icons :type="loginStatus ? 'compose' : 'plus'" size="16" color="#ffffff" />
           </button>
         </view>
         <text class="profile-name">{{ user.name }}</text>
@@ -166,11 +166,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getUserInfo, getUserStats, updateUserSettings, logout, clearToken } from '@/utils/food-diary/api.js'
+import { ref, computed, onMounted } from 'vue'
+import { getUserInfo, getUserStats, updateUserSettings, logout, clearToken, wxLogin } from '@/utils/food-diary/api.js'
+import { isLoggedIn, getUserInfo as getCachedUserInfo, setUserInfo, setToken, waitForLogin, getToken } from '@/utils/auth.js'
 
+const isLoggedInState = ref(false)
 const user = ref({
   name: '加载中...',
+  avatar: '/static/images/avatar.png',
   bio: '热爱咖啡的极简主义者',
   stats: {
     records: 0,
@@ -187,17 +190,49 @@ const preferences = ref({
 
 const cacheSize = ref('124 MB')
 
+// 登录状态
+const loginStatus = computed(() => isLoggedInState.value)
+
 // 加载用户数据
 const loadUserData = async () => {
+  // 检查登录状态
+  isLoggedInState.value = isLoggedIn()
+
+  if (!isLoggedInState.value) {
+    user.value.name = '点击登录'
+    user.value.bio = '登录后查看您的数据'
+    user.value.stats = { records: 0, stores: 0, favorites: 0 }
+    return
+  }
+
+  // 尝试从缓存获取
+  const cachedUser = getCachedUserInfo()
+  if (cachedUser) {
+    user.value.name = cachedUser.nickname || '微信用户'
+    user.value.avatar = cachedUser.avatar || '/static/images/avatar.png'
+    user.value.bio = cachedUser.city ? `来自${cachedUser.city}` : '热爱咖啡的极简主义者'
+  }
+
+  // 从服务器获取最新数据
   try {
     const userInfo = await getUserInfo()
     user.value.name = userInfo.nickname || '微信用户'
+    user.value.avatar = userInfo.avatar || '/static/images/avatar.png'
     user.value.bio = userInfo.city ? `来自${userInfo.city}` : '热爱咖啡的极简主义者'
+
+    // 更新缓存
+    setUserInfo(userInfo)
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    user.value.name = '未登录'
+    // 如果是 332 错误，清除登录状态
+    if (error.message && error.message.includes('登录')) {
+      isLoggedInState.value = false
+      user.value.name = '点击登录'
+      user.value.bio = '登录后查看您的数据'
+    }
   }
 
+  // 获取统计数据
   try {
     const stats = await getUserStats()
     user.value.stats.records = stats.totalRecords || 0
@@ -216,8 +251,69 @@ const handleSettings = () => {
   console.log('Settings')
 }
 
+const handleLogin = async () => {
+  if (isLoggedInState.value) {
+    // 已登录，跳转到个人资料页
+    goToProfile()
+    return
+  }
+
+  // 未登录，执行登录
+  uni.showLoading({ title: '登录中...' })
+
+  try {
+    const loginRes = await new Promise((resolve, reject) => {
+      uni.login({
+        success: resolve,
+        fail: reject
+      })
+    })
+
+    const result = await wxLogin(loginRes.code)
+
+    // 保存 Token
+    setToken(result.token)
+
+    // 保存用户信息
+    setUserInfo(result.userInfo)
+
+    uni.hideLoading()
+    uni.showToast({ title: '登录成功', icon: 'success' })
+
+    // 刷新数据
+    await loadUserData()
+
+    // 如果是新用户，引导完善信息
+    if (result.isNewUser) {
+      setTimeout(() => {
+        uni.showModal({
+          title: '完善信息',
+          content: '是否完善个人信息？',
+          success: (res) => {
+            if (res.confirm) {
+              goToProfile()
+            }
+          }
+        })
+      }, 1500)
+    }
+  } catch (error) {
+    uni.hideLoading()
+    console.error('登录失败:', error)
+    uni.showModal({
+      title: '登录失败',
+      content: error.message || '请稍后重试',
+      showCancel: false
+    })
+  }
+}
+
 const goToProfile = () => {
-  uni.showToast({ title: '个人资料', icon: 'none' })
+  if (!isLoggedInState.value) {
+    handleLogin()
+    return
+  }
+  uni.navigateTo({ url: '/pages/user/profile' })
 }
 
 const goToMedals = () => {
@@ -225,6 +321,10 @@ const goToMedals = () => {
 }
 
 const goToSecurity = () => {
+  if (!isLoggedInState.value) {
+    uni.showToast({ title: '请先登录', icon: 'none' })
+    return
+  }
   uni.showToast({ title: '安全设置', icon: 'none' })
 }
 
@@ -239,15 +339,21 @@ const goToLanguage = () => {
 }
 
 const goToNotifications = () => {
+  if (!isLoggedInState.value) {
+    uni.showToast({ title: '请先登录', icon: 'none' })
+    return
+  }
   uni.showToast({ title: '消息通知', icon: 'none' })
 }
 
 const toggleDarkMode = async (e) => {
   preferences.value.darkMode = e.detail.value
-  try {
-    await updateUserSettings({ darkMode: e.detail.value })
-  } catch (error) {
-    console.error('更新设置失败:', error)
+  if (isLoggedInState.value) {
+    try {
+      await updateUserSettings({ darkMode: e.detail.value })
+    } catch (error) {
+      console.error('更新设置失败:', error)
+    }
   }
 }
 
@@ -273,6 +379,11 @@ const clearCache = () => {
 }
 
 const handleLogout = () => {
+  if (!isLoggedInState.value) {
+    uni.showToast({ title: '您还未登录', icon: 'none' })
+    return
+  }
+
   uni.showModal({
     title: '退出登录',
     content: '确定要退出登录吗？',
@@ -284,8 +395,13 @@ const handleLogout = () => {
           // 即使API失败也清除本地数据
           clearToken()
         }
+
+        // 清除登录状态
+        isLoggedInState.value = false
+
         uni.showToast({ title: '已退出', icon: 'success' })
-        // 可以跳转到登录页或刷新数据
+
+        // 刷新数据
         setTimeout(() => {
           loadUserData()
         }, 500)
@@ -304,8 +420,23 @@ const switchTab = (tab) => {
   uni.switchTab({ url: routes[tab] })
 }
 
-onMounted(() => {
-  loadUserData()
+onMounted(async () => {
+  // 等待登录完成后再加载用户数据
+  console.log('[Profile] 等待登录完成...')
+  const loginSuccess = await waitForLogin()
+  console.log('[Profile] 登录完成，结果:', loginSuccess)
+
+  // 检查是否有 token
+  const token = getToken()
+  if (token) {
+    console.log('[Profile] Token 存在，开始加载用户数据')
+    loadUserData()
+  } else {
+    console.log('[Profile] Token 不存在，显示未登录状态')
+    isLoggedInState.value = false
+    user.value.name = '点击登录'
+    user.value.bio = '登录后查看您的数据'
+  }
 })
 </script>
 

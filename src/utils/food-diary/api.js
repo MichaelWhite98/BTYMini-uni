@@ -1,166 +1,37 @@
 /**
  * 饮品记录后端API服务
- * 与 bty-front 后端服务对接
+ * 与 bty-admin 后端服务对接
+ *
+ * 重要说明：
+ * 1. 所有请求会自动携带 Authorization 头（Token）
+ * 2. Token 失效时会自动跳转到登录页
+ * 3. 登录成功后会自动保存 Token
  */
 
-const getApiBase = () => {
-  if (typeof globalThis !== 'undefined' && globalThis.__BTY_API_BASE__) {
-    return String(globalThis.__BTY_API_BASE__).replace(/\/$/, '')
-  }
-  return ''
-}
+import { request, uploadFile as uploadRequest, wxLogin as login, logout as logoutApi } from '../request.js'
+import { getToken, setToken, clearToken, setUserInfo, getUserInfo as getCachedUserInfo } from '../auth.js'
 
-const getMiniRuntime = () => {
-  // 微信小程序环境
-  if (typeof wx !== 'undefined' && wx.request) {
-    return {
-      request: wx.request,
-      uploadFile: wx.uploadFile,
-      getStorageSync: wx.getStorageSync,
-      setStorageSync: wx.setStorageSync,
-      removeStorageSync: wx.removeStorageSync
-    }
-  }
-  // uni-app 环境
-  if (typeof uni !== 'undefined' && uni.request) {
-    return {
-      request: uni.request,
-      uploadFile: uni.uploadFile,
-      getStorageSync: uni.getStorageSync,
-      setStorageSync: uni.setStorageSync,
-      removeStorageSync: uni.removeStorageSync
-    }
-  }
-  return null
-}
+// 导出 Token 相关方法（保持兼容）
+export { getToken, setToken, clearToken }
 
-const TOKEN_KEY = 'bty_food_diary_token'
-const USER_INFO_KEY = 'bty_food_diary_user_info'
+// 导出登录方法
+export const wxLogin = login
 
-/**
- * 获取存储的Token
- */
-export const getToken = () => {
-  const runtime = getMiniRuntime()
-  if (!runtime) return null
-  return runtime.getStorageSync(TOKEN_KEY) || null
-}
-
-/**
- * 设置Token
- */
-export const setToken = (token) => {
-  const runtime = getMiniRuntime()
-  if (!runtime) return
-  runtime.setStorageSync(TOKEN_KEY, token)
-}
-
-/**
- * 清除Token
- */
-export const clearToken = () => {
-  const runtime = getMiniRuntime()
-  if (!runtime) return
-  runtime.removeStorageSync(TOKEN_KEY)
-  runtime.removeStorageSync(USER_INFO_KEY)
-}
+// 导出退出登录方法
+export const logout = logoutApi
 
 /**
  * 获取用户信息缓存
  */
 export const getUserInfoCache = () => {
-  const runtime = getMiniRuntime()
-  if (!runtime) return null
-  return runtime.getStorageSync(USER_INFO_KEY) || null
+  return getCachedUserInfo()
 }
 
 /**
  * 设置用户信息缓存
  */
 export const setUserInfoCache = (userInfo) => {
-  const runtime = getMiniRuntime()
-  if (!runtime) return
-  runtime.setStorageSync(USER_INFO_KEY, userInfo)
-}
-
-/**
- * 发起API请求
- */
-const requestApi = ({ url, method = 'GET', data, header = {} }) => {
-  const base = getApiBase()
-  const runtime = getMiniRuntime()
-
-  if (!base || !runtime) {
-    return Promise.reject(new Error('API服务不可用'))
-  }
-
-  // 添加Token到请求头
-  const token = getToken()
-  if (token) {
-    header['Authorization'] = token
-  }
-
-  return new Promise((resolve, reject) => {
-    runtime.request({
-      url: `${base}${url}`,
-      method,
-      data,
-      header,
-      success: (response) => {
-        const statusCode = Number(response.statusCode || 0)
-        if (statusCode >= 200 && statusCode < 300) {
-          const resData = response.data
-          if (resData.code === 200) {
-            resolve(resData.data)
-          } else {
-            reject(new Error(resData.msg || '请求失败'))
-          }
-        } else if (statusCode === 332 || statusCode === 333) {
-          // Token失效，清除本地存储
-          clearToken()
-          reject(new Error('登录已过期，请重新登录'))
-        } else {
-          reject(new Error(`请求失败: ${statusCode}`))
-        }
-      },
-      fail: (err) => {
-        reject(new Error(err.errMsg || '网络请求失败'))
-      }
-    })
-  })
-}
-
-// ==================== 认证相关 ====================
-
-/**
- * 微信登录
- */
-export const wxLogin = async (code) => {
-  const result = await requestApi({
-    url: '/api/food-diary/auth/login',
-    method: 'POST',
-    data: { code }
-  })
-
-  if (result.token) {
-    setToken(result.token)
-  }
-  if (result.userInfo) {
-    setUserInfoCache(result.userInfo)
-  }
-
-  return result
-}
-
-/**
- * 退出登录
- */
-export const logout = async () => {
-  await requestApi({
-    url: '/api/food-diary/auth/logout',
-    method: 'POST'
-  })
-  clearToken()
+  setUserInfo(userInfo)
 }
 
 // ==================== 用户相关 ====================
@@ -169,11 +40,11 @@ export const logout = async () => {
  * 获取用户信息
  */
 export const getUserInfo = async () => {
-  const result = await requestApi({
+  const result = await request({
     url: '/api/food-diary/user/info',
     method: 'GET'
   })
-  setUserInfoCache(result)
+  setUserInfo(result)
   return result
 }
 
@@ -181,7 +52,7 @@ export const getUserInfo = async () => {
  * 更新用户信息
  */
 export const updateUserInfo = async (params) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/user/info',
     method: 'PUT',
     data: params
@@ -192,7 +63,7 @@ export const updateUserInfo = async (params) => {
  * 获取用户统计数据
  */
 export const getUserStats = async () => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/user/stats',
     method: 'GET'
   })
@@ -202,7 +73,7 @@ export const getUserStats = async () => {
  * 更新用户设置
  */
 export const updateUserSettings = async (params) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/user/settings',
     method: 'PUT',
     data: params
@@ -215,7 +86,7 @@ export const updateUserSettings = async (params) => {
  * 获取记录列表
  */
 export const getRecordList = async (params = {}) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/records',
     method: 'GET',
     data: params
@@ -226,7 +97,7 @@ export const getRecordList = async (params = {}) => {
  * 获取记录详情
  */
 export const getRecordDetail = async (id) => {
-  return requestApi({
+  return request({
     url: `/api/food-diary/records/${id}`,
     method: 'GET'
   })
@@ -236,7 +107,7 @@ export const getRecordDetail = async (id) => {
  * 添加记录
  */
 export const addRecord = async (recordData) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/records',
     method: 'POST',
     data: recordData
@@ -247,7 +118,7 @@ export const addRecord = async (recordData) => {
  * 更新记录
  */
 export const updateRecord = async (id, recordData) => {
-  return requestApi({
+  return request({
     url: `/api/food-diary/records/${id}`,
     method: 'PUT',
     data: recordData
@@ -258,7 +129,7 @@ export const updateRecord = async (id, recordData) => {
  * 删除记录
  */
 export const deleteRecord = async (id) => {
-  return requestApi({
+  return request({
     url: `/api/food-diary/records/${id}`,
     method: 'DELETE'
   })
@@ -268,7 +139,7 @@ export const deleteRecord = async (id) => {
  * 切换收藏状态
  */
 export const toggleFavorite = async (id) => {
-  return requestApi({
+  return request({
     url: `/api/food-diary/records/${id}/favorite`,
     method: 'POST'
   })
@@ -280,7 +151,7 @@ export const toggleFavorite = async (id) => {
  * 获取月度统计
  */
 export const getMonthlyStats = async (month) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/stats/monthly',
     method: 'GET',
     data: { month }
@@ -291,7 +162,7 @@ export const getMonthlyStats = async (month) => {
  * 获取日历索引
  */
 export const getCalendarIndex = async (month) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/stats/calendar',
     method: 'GET',
     data: { month }
@@ -304,7 +175,7 @@ export const getCalendarIndex = async (month) => {
  * 获取上传令牌
  */
 export const getUploadToken = async (params) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/media/upload-token',
     method: 'POST',
     data: params
@@ -315,40 +186,7 @@ export const getUploadToken = async (params) => {
  * 上传图片
  */
 export const uploadImage = async (filePath, bizType = 'food-diary') => {
-  const base = getApiBase()
-  const runtime = getMiniRuntime()
-
-  if (!base || !runtime) {
-    return Promise.reject(new Error('API服务不可用'))
-  }
-
-  const token = getToken()
-
-  return new Promise((resolve, reject) => {
-    runtime.uploadFile({
-      url: `${base}/api/food-diary/media/upload`,
-      filePath,
-      name: 'file',
-      formData: { bizType },
-      header: token ? { 'Authorization': token } : {},
-      success: (response) => {
-        const statusCode = Number(response.statusCode || 0)
-        if (statusCode >= 200 && statusCode < 300) {
-          const resData = JSON.parse(response.data)
-          if (resData.code === 200) {
-            resolve(resData.data)
-          } else {
-            reject(new Error(resData.msg || '上传失败'))
-          }
-        } else {
-          reject(new Error(`上传失败: ${statusCode}`))
-        }
-      },
-      fail: (err) => {
-        reject(new Error(err.errMsg || '上传失败'))
-      }
-    })
-  })
+  return uploadRequest(filePath, { bizType })
 }
 
 // ==================== 抠图任务相关 ====================
@@ -357,7 +195,7 @@ export const uploadImage = async (filePath, bizType = 'food-diary') => {
  * 创建抠图任务
  */
 export const createCutoutTask = async (params) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/cutout/tasks',
     method: 'POST',
     data: params
@@ -368,7 +206,7 @@ export const createCutoutTask = async (params) => {
  * 查询抠图任务
  */
 export const getCutoutTask = async (taskId) => {
-  return requestApi({
+  return request({
     url: `/api/food-diary/cutout/tasks/${taskId}`,
     method: 'GET'
   })
@@ -380,7 +218,7 @@ export const getCutoutTask = async (taskId) => {
  * 搜索店铺
  */
 export const searchStores = async (keyword, limit = 10) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/stores/search',
     method: 'GET',
     data: { keyword, limit }
@@ -391,7 +229,7 @@ export const searchStores = async (keyword, limit = 10) => {
  * 获取附近店铺
  */
 export const getNearbyStores = async (latitude, longitude, radius = 1000, limit = 10) => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/stores/nearby',
     method: 'GET',
     data: { latitude, longitude, radius, limit }
@@ -404,7 +242,7 @@ export const getNearbyStores = async (latitude, longitude, radius = 1000, limit 
  * 获取勋章列表
  */
 export const getMedalList = async () => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/medals',
     method: 'GET'
   })
@@ -414,7 +252,7 @@ export const getMedalList = async () => {
  * 检查新勋章
  */
 export const checkNewMedals = async () => {
-  return requestApi({
+  return request({
     url: '/api/food-diary/medals/check',
     method: 'POST'
   })
